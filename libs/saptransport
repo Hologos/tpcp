@@ -1,0 +1,115 @@
+#! /usr/bin/env bash
+
+function saptransport::copy() {
+    local system="${1}"
+    local transport="${2}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   system=${system}"
+    logger::log "T" "   transport=${transport}"
+
+    return
+}
+
+function saptransport::add_to_buffer() {
+    local system="${1}"
+    local transport="${2}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   system=${system}"
+    logger::log "T" "   transport=${transport}"
+
+    return
+}
+
+function saptransport::delete_from_buffer() {
+    local system="${1}"
+    local transport="${2}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   system=${system}"
+    logger::log "T" "   transport=${transport}"
+
+    return
+}
+
+function saptransport::import() {
+    local system="${1}"
+    local transport="${2}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   system=${system}"
+    logger::log "T" "   transport=${transport}"
+
+    return
+}
+
+function saptransport::process_transport() {
+    local transport="${1}"
+    local system_list=("${!2}")
+    local action_list=("${!3}")
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   transport=${transport}"
+    logger::log "T" "   system_list=${system_list[@]}" # TODO: FIX array
+    logger::log "T" "   action_list=${action_list[@]}" # TODO: FIX array
+
+    logger::log "D" "Processing transport ${transport}."
+
+    for system in "${system_list[@]}"; do
+        saptransport::run_actions_on_system "${transport}" "${system}" "${action_list[@]}" &
+    done
+
+    wait
+}
+
+function saptransport::run_actions_on_system() {
+    local transport="${1}"
+    local system="${2}"
+    local action_list=("${@:3}")
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   transport=${transport}"
+    logger::log "T" "   system=${system}"
+    logger::log "T" "   action_list=${action_list[@]}" # TODO: FIX array
+
+    logger::log "D" "Running actions for transport ${transport} on system ${system}."
+
+    for action in "${action_list[@]}"; do
+        saptransport::run_action_on_system "${transport}" "${system}" "${action}"
+    done
+}
+
+function saptransport::run_action_on_system() {
+    local transport="${1}"
+    local system="${2}"
+    local action="${3}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   transport=${transport}"
+    logger::log "T" "   system=${system}"
+    logger::log "T" "   action=${action}"
+
+    logger::log "D" "Running action ${action} for transport ${transport} on system ${system}."
+
+    case "${action}" in
+        CPY )
+            saptransport::copy "${system}" "${transport}"
+        ;;
+
+        ADD )
+            saptransport::add_to_buffer "${system}" "${transport}"
+        ;;
+
+        IMP )
+            saptransport::import "${system}" "${transport}"
+        ;;
+
+        DEL )
+            saptransport::delete_from_buffer "${system}" "${transport}"
+        ;;
+
+        * )
+            tpcp::utils::terminate "'${action}' is not a valid action."
+    esac
+}

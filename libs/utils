@@ -1,0 +1,35 @@
+#! /usr/bin/env bash
+
+function tpcp::utils::usage() {
+    >&2 echo
+    >&2 echo "Usage: $0 <transport-list> <system-list> <action-list>"
+    >&2 echo ""
+    # >&2 echo "OPTIONS"
+    >&2 echo "    <transport-list>"
+    >&2 echo "        List of transport names (eg: ABCK000001)."
+    >&2 echo ""
+    >&2 echo "    <system-list>"
+    >&2 echo "        List of system names in form of [SID][CLIENT] (eg: ABC000)."
+    >&2 echo ""
+    >&2 echo "    <action-list>"
+    >&2 echo "        List of actions."
+    >&2 echo ""
+    >&2 echo "        Possible values:"
+    >&2 echo "            CPY - copy transport from source system to destination system"
+    >&2 echo "            ADD - add transport into import queue"
+    >&2 echo "            IMP - import transport into system"
+    >&2 echo "            DEL - delete transport from import queue"
+}
+
+function tpcp::utils::terminate() {
+    if [[ ${#} -ne 0 ]]; then
+        local message="${1}"
+
+        logger::log "T" "Running ${FUNCNAME}():"
+        logger::log "T" "   message=${message}"
+
+        logger::log "C" "${message}"
+    fi
+
+    exit 1
+}
