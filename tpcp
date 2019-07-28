@@ -46,7 +46,24 @@ tpcp::inputparser::parse_action_list "${3}"
 
 # -- main program -------------------------------------------------------------
 
+TPCP_WORK_DIRPATH="/tmp/tpcp.${RANDOM}.${$}"
+
+if [[ ! -d "${TPCP_WORK_DIRPATH}" ]]; then
+    mkdir "${TPCP_WORK_DIRPATH}" # || terminate
+fi
+
+# record initial status
+for transport in "${IP_TRANSPORT_LIST[@]}"; do
+    for system in "${IP_SYSTEM_LIST[@]}"; do
+        for action in "${IP_ACTION_LIST[@]}"; do
+            tpcp::utils::record_status "${SAPTRANSPORT_STATUS_INITIAL}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+        done
+    done
+done
+
 # process all transports on all systems
 for transport in "${IP_TRANSPORT_LIST[@]}"; do
     saptransport::process_transport "${transport}" "IP_SYSTEM_LIST[@]" "IP_ACTION_LIST[@]" # hack to pass 2 arrays as argument
 done
+
+rm -rf "${TPCP_WORK_DIRPATH}"

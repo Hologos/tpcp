@@ -5,6 +5,12 @@ SAPTRANSPORT_ACTION_ADD="ADD"
 SAPTRANSPORT_ACTION_IMP="IMP"
 SAPTRANSPORT_ACTION_DEL="DEL"
 
+SAPTRANSPORT_STATUS_INITIAL="INITIAL"
+SAPTRANSPORT_STATUS_RUNNING="RUNNING"
+SAPTRANSPORT_STATUS_FAILED="FAILED"
+SAPTRANSPORT_STATUS_FINISHED="FINISHED"
+SAPTRANSPORT_STATUS_SKIPPED="SKIPPED"
+
 function saptransport::copy() {
     local system="${1}"
     local transport="${2}"
@@ -13,7 +19,19 @@ function saptransport::copy() {
     logger::log "T" "   system=${system}"
     logger::log "T" "   transport=${transport}"
 
+    local action="${SAPTRANSPORT_ACTION_CPY}"
+
+    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
     sleep $(( ${RANDOM} % 10 + 1 ))
+
+    if [[ $(( ${RANDOM} % 3 )) -eq 0 ]]; then
+        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return 1
+    fi
+
+    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
     return
 }
@@ -26,7 +44,19 @@ function saptransport::add_to_buffer() {
     logger::log "T" "   system=${system}"
     logger::log "T" "   transport=${transport}"
 
+    local action="${SAPTRANSPORT_ACTION_ADD}"
+
+    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
     sleep $(( ${RANDOM} % 2 + 1 ))
+
+    if [[ $(( ${RANDOM} % 3 )) -eq 0 ]]; then
+        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return 1
+    fi
+
+    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
     return
 }
@@ -39,7 +69,19 @@ function saptransport::delete_from_buffer() {
     logger::log "T" "   system=${system}"
     logger::log "T" "   transport=${transport}"
 
+    local action="${SAPTRANSPORT_ACTION_DEL}"
+
+    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
     sleep $(( ${RANDOM} % 2 + 1 ))
+
+    if [[ $(( ${RANDOM} % 3 )) -eq 0 ]]; then
+        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return 1
+    fi
+
+    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
     return
 }
@@ -52,7 +94,19 @@ function saptransport::import() {
     logger::log "T" "   system=${system}"
     logger::log "T" "   transport=${transport}"
 
+    local action="${SAPTRANSPORT_ACTION_IMP}"
+
+    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
     sleep $(( ${RANDOM} % 20 + 1 ))
+
+    if [[ $(( ${RANDOM} % 3 )) -eq 0 ]]; then
+        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return 1
+    fi
+
+    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
     return
 }

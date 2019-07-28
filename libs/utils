@@ -33,3 +33,40 @@ function tpcp::utils::terminate() {
 
     exit 1
 }
+
+function tpcp::utils::record_status() {
+    local status="${1}"
+    local work_dirpath="${2}"
+    local transport="${3}"
+    local system="${4}"
+    local action="${5}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   status=${status}"
+    logger::log "T" "   work_dirpath=${work_dirpath}"
+    logger::log "T" "   transport=${transport}"
+    logger::log "T" "   system=${system}"
+    logger::log "T" "   action=${action}"
+
+    logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
+
+    echo "${status}" > "${work_dirpath}/tpcp_statuses.${transport}.${system}.${action}"
+
+    if [[ "${status}" == "${SAPTRANSPORT_STATUS_FAILED}" ]]; then
+        logger::log "D" "Changing all statuses of subsequent actions."
+
+        local subsequent_action
+        local action_found=0
+
+        for subsequent_action in "${IP_ACTION_LIST[@]}"; do
+            if [[ ${action_found} -eq 0 ]] && [[ "${subsequent_action}" == "${action}" ]]; then # this expects that 2 identical actions cannot exist
+                action_found=1
+                continue
+            fi
+
+            if [[ ${action_found} -eq 1 ]]; then
+                tpcp::utils::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${work_dirpath}" "${transport}" "${system}" "${subsequent_action}"
+            fi
+        done
+    fi
+}
