@@ -43,7 +43,7 @@ function tpcp::inputparser::parse_action_list() {
     for action in ${action_list}; do
         logger::log "D" "Validating action ${action}."
 
-        if ! [[ "${action}" =~ ^(CPY|ADD|IMP|DEL)$ ]]; then
+        if ! [[ "${action}" =~ ^(${SAPTRANSPORT_ACTION_CPY}|${SAPTRANSPORT_ACTION_ADD}|${SAPTRANSPORT_ACTION_IMP}|${SAPTRANSPORT_ACTION_DEL})$ ]]; then
             tpcp::utils::terminate "'${action}' is not a valid action."
         fi
 

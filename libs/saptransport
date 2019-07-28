@@ -1,5 +1,10 @@
 #! /usr/bin/env bash
 
+SAPTRANSPORT_ACTION_CPY="CPY"
+SAPTRANSPORT_ACTION_ADD="ADD"
+SAPTRANSPORT_ACTION_IMP="IMP"
+SAPTRANSPORT_ACTION_DEL="DEL"
+
 function saptransport::copy() {
     local system="${1}"
     local transport="${2}"
@@ -101,19 +106,19 @@ function saptransport::run_action_on_system() {
     logger::log "D" "Running action ${action} for transport ${transport} on system ${system}."
 
     case "${action}" in
-        CPY )
+        "${SAPTRANSPORT_ACTION_CPY}" )
             saptransport::copy "${system}" "${transport}"
         ;;
 
-        ADD )
+        "${SAPTRANSPORT_ACTION_ADD}" )
             saptransport::add_to_buffer "${system}" "${transport}"
         ;;
 
-        IMP )
+        "${SAPTRANSPORT_ACTION_IMP}" )
             saptransport::import "${system}" "${transport}"
         ;;
 
-        DEL )
+        "${SAPTRANSPORT_ACTION_DEL}" )
             saptransport::delete_from_buffer "${system}" "${transport}"
         ;;
 

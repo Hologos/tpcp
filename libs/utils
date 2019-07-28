@@ -15,10 +15,10 @@ function tpcp::utils::usage() {
     >&2 echo "        List of actions."
     >&2 echo ""
     >&2 echo "        Possible values:"
-    >&2 echo "            CPY - copy transport from source system to destination system"
-    >&2 echo "            ADD - add transport into import queue"
-    >&2 echo "            IMP - import transport into system"
-    >&2 echo "            DEL - delete transport from import queue"
+    >&2 echo "            ${SAPTRANSPORT_ACTION_CPY} - copy transport from source system to destination system"
+    >&2 echo "            ${SAPTRANSPORT_ACTION_ADD} - add transport into import queue"
+    >&2 echo "            ${SAPTRANSPORT_ACTION_IMP} - import transport into system"
+    >&2 echo "            ${SAPTRANSPORT_ACTION_DEL} - delete transport from import queue"
 }
 
 function tpcp::utils::terminate() {
