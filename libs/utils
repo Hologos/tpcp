@@ -1,6 +1,9 @@
 #! /usr/bin/env bash
 
 function tpcp::utils::usage() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
     >&2 echo
     >&2 echo "Usage: $0 <transport-list> <system-list> <action-list>"
     >&2 echo ""
@@ -22,10 +25,13 @@ function tpcp::utils::usage() {
 }
 
 function tpcp::utils::terminate() {
-    if [[ ${#} -ne 0 ]]; then
+    logger::log "T" "Running ${FUNCNAME}():"
+
+    if [[ ${#} -eq 0 ]]; then
+        logger::log "T" "   [no-params]"
+    else
         local message="${1}"
 
-        logger::log "T" "Running ${FUNCNAME}():"
         logger::log "T" "   message=${message}"
 
         logger::log "C" "${message}"
