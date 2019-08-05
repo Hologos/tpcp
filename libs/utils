@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+TPCP_STATUS_FILENAME_PART="tpcp_statuses"
+
 function tpcp::utils::usage() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   [no-params]"
@@ -56,7 +58,7 @@ function tpcp::utils::record_status() {
 
     logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
 
-    echo "${status}" > "${work_dirpath}/tpcp_statuses.${transport}.${system}.${action}"
+    echo "${status}" > "${work_dirpath}/${TPCP_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
 
     if [[ "${status}" == "${SAPTRANSPORT_STATUS_FAILED}" ]]; then
         logger::log "D" "Changing all statuses of subsequent actions."
