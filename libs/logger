@@ -11,7 +11,7 @@ _LOGGER_LEVELS_MAP=(
     "C" # 7: critical
 )
 
-function logger::_print_call_stack() {
+function logger::__print_call_stack() {
     local stack_size="${#FUNCNAME[@]}"
 
     >&2 echo
@@ -28,7 +28,7 @@ function logger::_print_call_stack() {
     done
 }
 
-function logger::_get_level_index() {
+function logger::__get_level_index() {
     local level="${1}"
 
     for logger_level_index in "${!_LOGGER_LEVELS_MAP[@]}"; do
@@ -38,10 +38,10 @@ function logger::_get_level_index() {
         fi
     done
 
-    logger::_terminate "Level '${level}' is not supported."
+    logger::__terminate "Level '${level}' is not supported."
 }
 
-function logger::_message() {
+function logger::__message() {
     local level="${1}"
     local message="${2}"
 
@@ -50,31 +50,31 @@ function logger::_message() {
     >&2 echo "[${datetime}] ${level}: ${message}"
 }
 
-function logger::_terminate() {
+function logger::__terminate() {
     local message="${1}"
 
-    logger::_message "C" "${message}"
-    logger::_print_call_stack
+    logger::__message "C" "${message}"
+    logger::__print_call_stack
 
     exit 1
 }
 
-function logger::_is_level_set() {
+function logger::__is_level_set() {
     if [[ -z ${_LOGGER_LEVEL+x} ]]; then
-        logger::_terminate "Level is not set."
+        logger::__terminate "Level is not set."
     fi
 }
 
-function logger::_validate_level() {
+function logger::__validate_level() {
     local level="${1}"
 
-    local level_index="$(logger::_get_level_index "${level}")"
+    local level_index="$(logger::__get_level_index "${level}")"
 }
 
 function logger::init() {
     local level="${1}"
 
-    logger::_validate_level "${level}"
+    logger::__validate_level "${level}"
 
     _LOGGER_LEVEL="${level}"
 }
@@ -93,14 +93,14 @@ function logger::log() {
     # local message="${2}"
     local message="${@:2}" # TODO: FIX array
 
-    logger::_is_level_set
+    logger::__is_level_set
 
-    local level_index="$(logger::_get_level_index "${level}")"
-    local global_level_index="$(logger::_get_level_index "${_LOGGER_LEVEL}")"
+    local level_index="$(logger::__get_level_index "${level}")"
+    local global_level_index="$(logger::__get_level_index "${_LOGGER_LEVEL}")"
 
     if [[ ${level_index} -lt ${global_level_index} ]]; then
         return
     fi
 
-    logger::_message "${level}" "${message}"
+    logger::__message "${level}" "${message}"
 }
