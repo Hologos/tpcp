@@ -1,0 +1,123 @@
+#! /usr/bin/env bash
+
+# TODO: save to process workdir
+TPCP_SSH_MASTER_CONTROL_SOCKET_FILEPATH="/tmp/ssh-master-control-%r@%h:%p"
+
+function tpcp::ssh::__close_master_connection() {
+    local user="${1}"
+    local host="${2}"
+    local port="${3}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   user=${user}"
+    logger::log "T" "   host=${host}"
+    logger::log "T" "   port=${port}"
+
+    logger::log "D" "Closing master connection ${user}@${host}:${port}."
+
+    ssh                                                 \
+        -o ConnectTimeout=5                             \
+        -o BatchMode=yes                                \
+        -S "${TPCP_SSH_MASTER_CONTROL_SOCKET_FILEPATH}" \
+        -p "${port}"                                    \
+                                                        \
+        -O stop                                         \
+                                                        \
+        "${user}"@"${host}" &> /dev/null
+}
+
+function tpcp::ssh::__is_master_connection_alive() {
+    local user="${1}"
+    local host="${2}"
+    local port="${3}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   user=${user}"
+    logger::log "T" "   host=${host}"
+    logger::log "T" "   port=${port}"
+
+    ssh                                                 \
+        -o ConnectTimeout=5                             \
+        -o BatchMode=yes                                \
+        -S "${TPCP_SSH_MASTER_CONTROL_SOCKET_FILEPATH}" \
+        -p "${port}"                                    \
+                                                        \
+        -O check                                        \
+                                                        \
+        "${user}"@"${host}" &> /dev/null
+}
+
+function tpcp::ssh::__create_master_connection() {
+    local user="${1}"
+    local host="${2}"
+    local port="${3}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   user=${user}"
+    logger::log "T" "   host=${host}"
+    logger::log "T" "   port=${port}"
+
+    logger::log "D" "Creating master connection ${user}@${host}:${port}."
+
+    # Explanation:
+    #   -M                   - places the ssh client into ``master'' mode for connection sharing
+    #   -N                   - do not execute a remote command
+    #   -f                   - requests ssh to go to background just before command execution.
+    #   -o ControlPersist=2m - keep the connection open for 2 minutes
+
+    ssh                                                 \
+        -M                                              \
+        -N                                              \
+        -f                                              \
+        -o ConnectTimeout=5                             \
+        -o ControlMaster=yes                            \
+        -o ControlPersist=2m                            \
+        -o BatchMode=yes                                \
+        -S "${TPCP_SSH_MASTER_CONTROL_SOCKET_FILEPATH}" \
+        -p "${port}"                                    \
+                                                        \
+        "${user}"@"${host}" &> /dev/null
+
+    return
+}
+
+function tpcp::ssh::run_command() {
+    local user="${1}"
+    local host="${2}"
+    local port="${3}"
+    local command="${4}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   user=${user}"
+    logger::log "T" "   host=${host}"
+    logger::log "T" "   port=${port}"
+    logger::log "T" "   command=${command}"
+
+    if ! tpcp::ssh::__is_master_connection_alive "${user}" "${host}" "${port}"; then
+        logger::log "D" "Master connection ${user}@${host}:${port} is not alive."
+
+        tpcp::ssh::__create_master_connection "${user}" "${host}" "${port}"
+    else
+        logger::log "D" "Master connection ${user}@${host}:${port} is still alive."
+    fi
+
+    local result=0
+
+    ssh                                                 \
+        -o ConnectTimeout=5                             \
+        -o BatchMode=yes                                \
+        -S "${TPCP_SSH_MASTER_CONTROL_SOCKET_FILEPATH}" \
+        -p "${port}"                                    \
+                                                        \
+        "${user}"@"${host}"                             \
+                                                        \
+        "${command}" 1>&2 || result=1
+
+    if [[ ${result} -eq 0 ]]; then
+        logger::log "D" "Command '${command}' on ${user}@${host}:${port} finished successfully."
+    else
+        logger::log "D" "Command '${command}' on ${user}@${host}:${port} failed."
+    fi
+
+    return ${result}
+}

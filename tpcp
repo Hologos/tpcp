@@ -24,6 +24,7 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/logger"
 . "${ABSOLUTE_DIRPATH}/libs/inputparser"
 . "${ABSOLUTE_DIRPATH}/libs/utils"
+. "${ABSOLUTE_DIRPATH}/libs/ssh"
 . "${ABSOLUTE_DIRPATH}/libs/saptransport"
 
 # -- initial setup ------------------------------------------------------------
