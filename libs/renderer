@@ -1,0 +1,79 @@
+#! /usr/bin/env bash
+
+function tpcp::renderer::render() {
+    for transport in "${IP_TRANSPORT_LIST[@]}"; do
+        logger::log "T" "Rendering output for transport ${transport}."
+
+        echo
+        echo -n "          " # transport name = 10 characters
+        echo -n "     "      #    indentation =  5 characters
+        echo -n "      "     #    system name =  6 characters
+        echo -n "    "       #    indentation =  4 characters
+
+        for action in "${IP_ACTION_LIST[@]}"; do
+            echo -n " ${action}"
+        done
+
+        echo
+
+        system_index=0
+
+        for system in "${IP_SYSTEM_LIST[@]}"; do
+            logger::log "T" "Rendering action results for system ${system}."
+
+            system_index=$(( ${system_index} + 1 ))
+
+            if [[ ${system_index} -eq 1 ]]; then
+                echo -n "${transport}" # transport name = 10 characters
+            else
+                echo -n "          "   # transport name = 10 characters
+            fi
+
+            echo -n "     "     # indentation = 5 characters
+            echo -n "${system}" # system name = 6 characters
+            echo -n "     "     # indentation = 5 characters
+
+            for action in "${IP_ACTION_LIST[@]}"; do
+                logger::log "T" "Rendering action result "${action}" for system ${system}."
+
+                local status="$( < "${TPCP_WORK_DIRPATH}/${TPCP_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" # load
+
+                case "${status}" in
+                    "${SAPTRANSPORT_STATUS_INITIAL}" )
+                        echo -n " "  #   indentation = 1 character
+                        echo -n " "  # action result = 1 character
+                        echo -n "  " #   indentation = 2 characters
+                    ;;
+
+                    "${SAPTRANSPORT_STATUS_RUNNING}" )
+                        echo -n "..."  # action result = 1 character
+                        echo -n " "  #   indentation = 1 character
+                    ;;
+
+                    "${SAPTRANSPORT_STATUS_FAILED}" )
+                        echo -n " "  #   indentation = 1 character
+                        echo -n "✖"  # action result = 1 character
+                        echo -n "  " #   indentation = 2 characters
+                    ;;
+
+                    "${SAPTRANSPORT_STATUS_FINISHED}" )
+                        echo -n " "  #   indentation = 1 character
+                        echo -n "✔"  # action result = 1 character
+                        echo -n "  " #   indentation = 2 characters
+                    ;;
+
+                    "${SAPTRANSPORT_STATUS_SKIPPED}" )
+                        echo -n " "  #   indentation = 1 character
+                        echo -n "-"  # action result = 1 character
+                        echo -n "  " #   indentation = 2 characters
+                    ;;
+
+                    *)
+                        tpcp::utils::terminate "Unknown status '${status}' of action '${action}'."
+                esac
+            done
+
+            echo
+        done
+    done
+}

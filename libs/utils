@@ -78,3 +78,28 @@ function tpcp::utils::record_status() {
         done
     fi
 }
+
+function tpcp::utils::is_all_done() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
+    # TODO: implement check of heartbeats or check all ssh connections
+
+    local status_filepath
+
+    for status_filepath in "${TPCP_WORK_DIRPATH}/${TPCP_STATUS_FILENAME_PART}."*; do
+        local status="$( < "${status_filepath}" )"
+
+        case "${status}" in
+            # BUG: There is a race condition due to changing status is not an atomic operation.
+            #      States FINISHED + INITIAL and FAILED + INITIAL are OK for a second.
+            #
+            # "${SAPTRANSPORT_STATUS_RUNNING}" | "${SAPTRANSPORT_STATUS_INITIAL}" )
+            "${SAPTRANSPORT_STATUS_RUNNING}" )
+                logger::log "D" "Not yet done, status '${status}' is stored in '${status_filepath}'."
+
+                return 1
+            ;;
+        esac
+    done
+}

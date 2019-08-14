@@ -26,6 +26,7 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/utils"
 . "${ABSOLUTE_DIRPATH}/libs/ssh"
 . "${ABSOLUTE_DIRPATH}/libs/saptransport"
+. "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
 logger::init "N"
@@ -66,6 +67,21 @@ done
 for transport in "${IP_TRANSPORT_LIST[@]}"; do
     saptransport::process_transport "${transport}" "IP_SYSTEM_LIST[@]" "IP_ACTION_LIST[@]" # hack to pass 2 arrays as argument
 done &
+
+sleep 1
+
+while : ; do
+    tpcp::renderer::render
+
+    # BUG: When job dies, its status doesn't change and this function will return false forever
+    if tpcp::utils::is_all_done; then
+        sleep 1
+        tpcp::renderer::render
+        break
+    fi
+
+    sleep 1
+done
 
 wait
 
