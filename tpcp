@@ -65,6 +65,8 @@ done
 # process all transports on all systems
 for transport in "${IP_TRANSPORT_LIST[@]}"; do
     saptransport::process_transport "${transport}" "IP_SYSTEM_LIST[@]" "IP_ACTION_LIST[@]" # hack to pass 2 arrays as argument
-done
+done &
+
+wait
 
 rm -rf "${TPCP_WORK_DIRPATH}"
