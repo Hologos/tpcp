@@ -11,106 +11,6 @@ SAPTRANSPORT_STATUS_FAILED="FAILED"
 SAPTRANSPORT_STATUS_FINISHED="FINISHED"
 SAPTRANSPORT_STATUS_SKIPPED="SKIPPED"
 
-function saptransport::copy() {
-    local system="${1}"
-    local transport="${2}"
-
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   system=${system}"
-    logger::log "T" "   transport=${transport}"
-
-    local action="${SAPTRANSPORT_ACTION_CPY}"
-
-    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-    sleep $(( ${RANDOM} % 10 + 1 ))
-
-    if [[ $(( ${RANDOM} % 3 )) -eq 0 ]]; then
-        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-        return 1
-    fi
-
-    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-    return
-}
-
-function saptransport::add_to_buffer() {
-    local system="${1}"
-    local transport="${2}"
-
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   system=${system}"
-    logger::log "T" "   transport=${transport}"
-
-    local action="${SAPTRANSPORT_ACTION_ADD}"
-
-    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-    sleep $(( ${RANDOM} % 2 + 1 ))
-
-    if [[ $(( ${RANDOM} % 3 )) -eq 0 ]]; then
-        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-        return 1
-    fi
-
-    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-    return
-}
-
-function saptransport::delete_from_buffer() {
-    local system="${1}"
-    local transport="${2}"
-
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   system=${system}"
-    logger::log "T" "   transport=${transport}"
-
-    local action="${SAPTRANSPORT_ACTION_DEL}"
-
-    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-    sleep $(( ${RANDOM} % 2 + 1 ))
-
-    if [[ $(( ${RANDOM} % 3 )) -eq 0 ]]; then
-        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-        return 1
-    fi
-
-    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-    return
-}
-
-function saptransport::import() {
-    local system="${1}"
-    local transport="${2}"
-
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   system=${system}"
-    logger::log "T" "   transport=${transport}"
-
-    local action="${SAPTRANSPORT_ACTION_IMP}"
-
-    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-    sleep $(( ${RANDOM} % 20 + 1 ))
-
-    if [[ $(( ${RANDOM} % 3 )) -eq 0 ]]; then
-        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-        return 1
-    fi
-
-    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
-
-    return
-}
-
 function saptransport::process_transport() {
     local transport="${1}"
     local system_list=("${!2}")
@@ -159,24 +59,58 @@ function saptransport::run_action_on_system() {
 
     logger::log "D" "Running action ${action} for transport ${transport} on system ${system}."
 
+    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+    local sid="${system,,}"
+    local ssh_user="${sid:0:3}adm"
+    local ssh_host="${sid:0:3}00"
+    local ssh_port="22"
+
     case "${action}" in
         "${SAPTRANSPORT_ACTION_CPY}" )
-            saptransport::copy "${system}" "${transport}"
+            local sleep_duration=$(( ${RANDOM} % 10 + 1 ))
+            local rc_random=$(( ${RANDOM} % 7 ))
+            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
         ;;
 
         "${SAPTRANSPORT_ACTION_ADD}" )
-            saptransport::add_to_buffer "${system}" "${transport}"
+            local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
+            local rc_random=$(( ${RANDOM} % 7 ))
+            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
         ;;
 
         "${SAPTRANSPORT_ACTION_IMP}" )
-            saptransport::import "${system}" "${transport}"
+            local sleep_duration=$(( ${RANDOM} % 20 + 1 ))
+            local rc_random=$(( ${RANDOM} % 7 ))
+            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
         ;;
 
         "${SAPTRANSPORT_ACTION_DEL}" )
-            saptransport::delete_from_buffer "${system}" "${transport}"
+            local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
+            local rc_random=$(( ${RANDOM} % 7 ))
+            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
         ;;
 
         * )
-            tpcp::utils::terminate "'${action}' is not a valid action."
+            tpcp::utils::terminate "'${action}' is not a valid action." # assert
     esac
+
+    local rc=0
+
+    tpcp::ssh::run_command  \
+        "${ssh_user}"       \
+        "${ssh_host}"       \
+        "${ssh_port}"       \
+        "${command}"        \
+    || rc=1
+
+    if [[ ${rc} -eq 0 ]]; then
+        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return
+    else
+        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return 1
+    fi
 }
