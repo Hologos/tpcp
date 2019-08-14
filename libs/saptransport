@@ -24,13 +24,13 @@ function saptransport::process_transport() {
     logger::log "D" "Processing transport ${transport}."
 
     for system in "${system_list[@]}"; do
-        saptransport::run_actions_on_system "${transport}" "${system}" "${action_list[@]}" &
+        saptransport::__run_actions_on_system "${transport}" "${system}" "${action_list[@]}" &
     done
 
     wait
 }
 
-function saptransport::run_actions_on_system() {
+function saptransport::__run_actions_on_system() {
     local transport="${1}"
     local system="${2}"
     local action_list=("${@:3}")
@@ -42,12 +42,14 @@ function saptransport::run_actions_on_system() {
 
     logger::log "D" "Running actions for transport ${transport} on system ${system}."
 
+    # TODO: implement heartbeats
+
     for action in "${action_list[@]}"; do
-        saptransport::run_action_on_system "${transport}" "${system}" "${action}"
+        saptransport::__run_action_on_system "${transport}" "${system}" "${action}"
     done
 }
 
-function saptransport::run_action_on_system() {
+function saptransport::__run_action_on_system() {
     local transport="${1}"
     local system="${2}"
     local action="${3}"
