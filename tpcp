@@ -73,7 +73,7 @@ sleep 1
 while : ; do
     tpcp::renderer::render
 
-    # BUG: When job dies, its status doesn't change and this function will return false forever
+    # BUG: When job dies, its status doesn't change and this function will return false forever.
     if saptransport::is_all_done; then
         sleep 1
         tpcp::renderer::render
