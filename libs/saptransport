@@ -111,6 +111,8 @@ function saptransport::__run_action_on_system() {
 
         return
     else
+        logger::log "W" "There was an error while running action ${action} for transport ${transport} on system ${system}."
+
         saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
         return 1
