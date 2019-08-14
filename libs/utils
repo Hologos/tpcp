@@ -9,7 +9,6 @@ function tpcp::utils::usage() {
     >&2 echo
     >&2 echo "Usage: $0 <transport-list> <system-list> <action-list>"
     >&2 echo ""
-    # >&2 echo "OPTIONS"
     >&2 echo "    <transport-list>"
     >&2 echo "        List of transport names (eg: ABCK000001)."
     >&2 echo ""
