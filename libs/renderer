@@ -11,17 +11,20 @@ function tpcp::renderer::render() {
     for transport in "${IP_TRANSPORT_LIST[@]}"; do
         logger::log "T" "Rendering output for transport ${transport}."
 
+        local line=""
+
         echo
-        echo -n "          " # transport name = 10 characters
-        echo -n "     "      #    indentation =  5 characters
-        echo -n "      "     #    system name =  6 characters
-        echo -n "    "       #    indentation =  4 characters
+
+        line+="          " # transport name = 10 characters
+        line+="     "      #    indentation =  5 characters
+        line+="      "     #    system name =  6 characters
+        line+="    "       #    indentation =  4 characters
 
         for action in "${IP_ACTION_LIST[@]}"; do
-            echo -n " ${action}"
+            line+=" ${action}"
         done
 
-        echo
+        echo "${line}"
 
         system_index=0
 
@@ -29,16 +32,17 @@ function tpcp::renderer::render() {
             logger::log "T" "Rendering action results for system ${system}."
 
             system_index=$(( ${system_index} + 1 ))
+            line=""
 
             if [[ ${system_index} -eq 1 ]]; then
-                echo -n "${transport}" # transport name = 10 characters
+                line+="${transport}" # transport name = 10 characters
             else
-                echo -n "          "   # transport name = 10 characters
+                line+="          "   # transport name = 10 characters
             fi
 
-            echo -n "     "     # indentation = 5 characters
-            echo -n "${system}" # system name = 6 characters
-            echo -n "     "     # indentation = 5 characters
+            line+="     "     # indentation = 5 characters
+            line+="${system}" # system name = 6 characters
+            line+="     "     # indentation = 5 characters
 
             for action in "${IP_ACTION_LIST[@]}"; do
                 logger::log "T" "Rendering action result "${action}" for system ${system}."
@@ -47,32 +51,32 @@ function tpcp::renderer::render() {
 
                 case "${status}" in
                     "${SAPTRANSPORT_STATUS_INITIAL}" )
-                        echo -n " "  #   indentation = 1 character
-                        echo -n " "  # action result = 1 character
-                        echo -n "  " #   indentation = 2 characters
+                        line+=" "  #   indentation = 1 character
+                        line+=" "  # action result = 1 character
+                        line+="  " #   indentation = 2 characters
                     ;;
 
                     "${SAPTRANSPORT_STATUS_RUNNING}" )
-                        echo -n "..."  # action result = 1 character
-                        echo -n " "  #   indentation = 1 character
+                        line+="..."  # action result = 1 character
+                        line+=" "  #   indentation = 1 character
                     ;;
 
                     "${SAPTRANSPORT_STATUS_FAILED}" )
-                        echo -n " "  #   indentation = 1 character
-                        echo -n "✖"  # action result = 1 character
-                        echo -n "  " #   indentation = 2 characters
+                        line+=" "  #   indentation = 1 character
+                        line+="✖"  # action result = 1 character
+                        line+="  " #   indentation = 2 characters
                     ;;
 
                     "${SAPTRANSPORT_STATUS_FINISHED}" )
-                        echo -n " "  #   indentation = 1 character
-                        echo -n "✔"  # action result = 1 character
-                        echo -n "  " #   indentation = 2 characters
+                        line+=" "  #   indentation = 1 character
+                        line+="✔"  # action result = 1 character
+                        line+="  " #   indentation = 2 characters
                     ;;
 
                     "${SAPTRANSPORT_STATUS_SKIPPED}" )
-                        echo -n " "  #   indentation = 1 character
-                        echo -n "-"  # action result = 1 character
-                        echo -n "  " #   indentation = 2 characters
+                        line+=" "  #   indentation = 1 character
+                        line+="-"  # action result = 1 character
+                        line+="  " #   indentation = 2 characters
                     ;;
 
                     *)
@@ -80,7 +84,7 @@ function tpcp::renderer::render() {
                 esac
             done
 
-            echo
+            echo "${line}"
         done
     done
 
