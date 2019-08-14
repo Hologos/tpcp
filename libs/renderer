@@ -3,6 +3,9 @@
 TPCP_RENDERER_ALREADY_RENDERED=0
 
 function tpcp::renderer::render() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
     tpcp::renderer::__clear_previous_output "${#IP_TRANSPORT_LIST[@]}" "${#IP_SYSTEM_LIST[@]}"
 
     for transport in "${IP_TRANSPORT_LIST[@]}"; do
