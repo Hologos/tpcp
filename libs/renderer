@@ -1,0 +1,120 @@
+#! /usr/bin/env bash
+
+TPCP_RENDERER_ALREADY_RENDERED=0
+
+function tpcp::renderer::render() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
+    tpcp::renderer::__clear_previous_output "${#IP_TRANSPORT_LIST[@]}" "${#IP_SYSTEM_LIST[@]}"
+
+    for transport in "${IP_TRANSPORT_LIST[@]}"; do
+        logger::log "T" "Rendering output for transport ${transport}."
+
+        local line=""
+
+        echo
+
+        line+="          " # transport name = 10 characters
+        line+="     "      #    indentation =  5 characters
+        line+="      "     #    system name =  6 characters
+        line+="    "       #    indentation =  4 characters
+
+        for action in "${IP_ACTION_LIST[@]}"; do
+            line+=" ${action}"
+        done
+
+        echo "${line}"
+
+        system_index=0
+
+        for system in "${IP_SYSTEM_LIST[@]}"; do
+            logger::log "T" "Rendering action results for system ${system}."
+
+            system_index=$(( ${system_index} + 1 ))
+            line=""
+
+            if [[ ${system_index} -eq 1 ]]; then
+                line+="${transport}" # transport name = 10 characters
+            else
+                line+="          "   # transport name = 10 characters
+            fi
+
+            line+="     "     # indentation = 5 characters
+            line+="${system}" # system name = 6 characters
+            line+="     "     # indentation = 5 characters
+
+            for action in "${IP_ACTION_LIST[@]}"; do
+                logger::log "T" "Rendering action result "${action}" for system ${system}."
+
+                local status="$( < "${TPCP_WORK_DIRPATH}/${TPCP_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" # load
+
+                case "${status}" in
+                    "${SAPTRANSPORT_STATUS_INITIAL}" )
+                        line+=" "  #   indentation = 1 character
+                        line+=" "  # action result = 1 character
+                        line+="  " #   indentation = 2 characters
+                    ;;
+
+                    "${SAPTRANSPORT_STATUS_RUNNING}" )
+                        line+="..."  # action result = 1 character
+                        line+=" "  #   indentation = 1 character
+                    ;;
+
+                    "${SAPTRANSPORT_STATUS_FAILED}" )
+                        line+=" "  #   indentation = 1 character
+                        line+="✖"  # action result = 1 character
+                        line+="  " #   indentation = 2 characters
+                    ;;
+
+                    "${SAPTRANSPORT_STATUS_FINISHED}" )
+                        line+=" "  #   indentation = 1 character
+                        line+="✔"  # action result = 1 character
+                        line+="  " #   indentation = 2 characters
+                    ;;
+
+                    "${SAPTRANSPORT_STATUS_SKIPPED}" )
+                        line+=" "  #   indentation = 1 character
+                        line+="-"  # action result = 1 character
+                        line+="  " #   indentation = 2 characters
+                    ;;
+
+                    *)
+                        tpcp::utils::terminate "Unknown status '${status}' of action '${action}'."
+                esac
+            done
+
+            echo "${line}"
+        done
+    done
+
+    TPCP_RENDERER_ALREADY_RENDERED=1
+}
+
+function tpcp::renderer::__clear_previous_output() {
+    local number_of_transports="${1}"
+    local number_of_systems="${2}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   number_of_transports=${number_of_transports}"
+    logger::log "T" "   number_of_systems=${number_of_systems}"
+
+    # 1st line: empty
+    # 2nd line: actions
+    #     rest: system + results
+    #
+    # repeats for every transport
+    local number_of_lines=$(( (1 + 1 + ${number_of_systems} ) * ${number_of_transports} ))
+
+    logger::log "T" "Total number of rendered lines is ${number_of_lines}."
+
+    if [[ ${TPCP_RENDERER_ALREADY_RENDERED} -eq 0 ]]; then
+        for i in $(seq ${number_of_lines}); do
+            echo
+        done
+
+        ansi::deleteLines "${number_of_lines}"
+    fi
+
+    ansi::previousLine "${number_of_lines}"
+}

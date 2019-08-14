@@ -1,0 +1,52 @@
+#! /usr/bin/env bash
+
+function tpcp::inputparser::parse_transport_list() {
+    local transport_list="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   transport_list=${transport_list}"
+
+    for transport in ${transport_list}; do
+        logger::log "D" "Validating transport ${transport}."
+
+        if ! [[ "${transport}" =~ ^[A-Z0-9]{3}K[0-9]{6}$ ]]; then
+            tpcp::utils::terminate "'${transport}' is not a valid transport name."
+        fi
+
+        IP_TRANSPORT_LIST+=( "${transport}" )
+    done
+}
+
+function tpcp::inputparser::parse_system_list() {
+    local system_list="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   system_list=${system_list}"
+
+    for system in ${system_list}; do
+        logger::log "D" "Validating system ${system}."
+
+        if ! [[ "${system}" =~ ^[A-Z0-9]{3}[0-9]{3}$ ]]; then
+            tpcp::utils::terminate "'${system}' is not a valid system name."
+        fi
+
+        IP_SYSTEM_LIST+=( "${system}" )
+    done
+}
+
+function tpcp::inputparser::parse_action_list() {
+    local action_list="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   action_list=${action_list}"
+
+    for action in ${action_list}; do
+        logger::log "D" "Validating action ${action}."
+
+        if ! [[ "${action}" =~ ^(${SAPTRANSPORT_ACTION_CPY}|${SAPTRANSPORT_ACTION_ADD}|${SAPTRANSPORT_ACTION_IMP}|${SAPTRANSPORT_ACTION_DEL})$ ]]; then
+            tpcp::utils::terminate "'${action}' is not a valid action."
+        fi
+
+        IP_ACTION_LIST+=( "${action}" )
+    done
+}

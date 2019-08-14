@@ -1,0 +1,180 @@
+#! /usr/bin/env bash
+
+SAPTRANSPORT_ACTION_CPY="CPY"
+SAPTRANSPORT_ACTION_ADD="ADD"
+SAPTRANSPORT_ACTION_IMP="IMP"
+SAPTRANSPORT_ACTION_DEL="DEL"
+
+SAPTRANSPORT_STATUS_INITIAL="INITIAL"
+SAPTRANSPORT_STATUS_RUNNING="RUNNING"
+SAPTRANSPORT_STATUS_FAILED="FAILED"
+SAPTRANSPORT_STATUS_FINISHED="FINISHED"
+SAPTRANSPORT_STATUS_SKIPPED="SKIPPED"
+
+function saptransport::process_transport() {
+    local transport="${1}"
+    local system_list=("${!2}")
+    local action_list=("${!3}")
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   transport=${transport}"
+    logger::log "T" "   system_list=${system_list[@]}" # TODO: FIX array
+    logger::log "T" "   action_list=${action_list[@]}" # TODO: FIX array
+
+    logger::log "D" "Processing transport ${transport}."
+
+    for system in "${system_list[@]}"; do
+        saptransport::__run_actions_on_system "${transport}" "${system}" "${action_list[@]}" &
+    done
+
+    wait
+}
+
+function saptransport::__run_actions_on_system() {
+    local transport="${1}"
+    local system="${2}"
+    local action_list=("${@:3}")
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   transport=${transport}"
+    logger::log "T" "   system=${system}"
+    logger::log "T" "   action_list=${action_list[@]}" # TODO: FIX array
+
+    logger::log "D" "Running actions for transport ${transport} on system ${system}."
+
+    # TODO: implement heartbeats
+
+    for action in "${action_list[@]}"; do
+        saptransport::__run_action_on_system "${transport}" "${system}" "${action}"
+    done
+}
+
+function saptransport::__run_action_on_system() {
+    local transport="${1}"
+    local system="${2}"
+    local action="${3}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   transport=${transport}"
+    logger::log "T" "   system=${system}"
+    logger::log "T" "   action=${action}"
+
+    logger::log "D" "Running action ${action} for transport ${transport} on system ${system}."
+
+    saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+    local sid="${system,,}"
+    local ssh_user="${sid:0:3}adm"
+    local ssh_host="${sid:0:3}00"
+    local ssh_port="22"
+
+    case "${action}" in
+        "${SAPTRANSPORT_ACTION_CPY}" )
+            local sleep_duration=$(( ${RANDOM} % 10 + 1 ))
+            local rc_random=$(( ${RANDOM} % 7 ))
+            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+        ;;
+
+        "${SAPTRANSPORT_ACTION_ADD}" )
+            local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
+            local rc_random=$(( ${RANDOM} % 7 ))
+            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+        ;;
+
+        "${SAPTRANSPORT_ACTION_IMP}" )
+            local sleep_duration=$(( ${RANDOM} % 20 + 1 ))
+            local rc_random=$(( ${RANDOM} % 7 ))
+            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+        ;;
+
+        "${SAPTRANSPORT_ACTION_DEL}" )
+            local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
+            local rc_random=$(( ${RANDOM} % 7 ))
+            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+        ;;
+
+        * )
+            tpcp::utils::terminate "'${action}' is not a valid action." # assert
+    esac
+
+    local rc=0
+
+    tpcp::ssh::run_command  \
+        "${ssh_user}"       \
+        "${ssh_host}"       \
+        "${ssh_port}"       \
+        "${command}"        \
+    || rc=1
+
+    if [[ ${rc} -eq 0 ]]; then
+        saptransport::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return
+    else
+        logger::log "W" "There was an error while running action ${action} for transport ${transport} on system ${system}."
+
+        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return 1
+    fi
+}
+
+function saptransport::record_status() {
+    local status="${1}"
+    local work_dirpath="${2}"
+    local transport="${3}"
+    local system="${4}"
+    local action="${5}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   status=${status}"
+    logger::log "T" "   work_dirpath=${work_dirpath}"
+    logger::log "T" "   transport=${transport}"
+    logger::log "T" "   system=${system}"
+    logger::log "T" "   action=${action}"
+
+    logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
+
+    echo "${status}" > "${work_dirpath}/${TPCP_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+
+    if [[ "${status}" == "${SAPTRANSPORT_STATUS_FAILED}" ]]; then
+        logger::log "D" "Changing all statuses of subsequent actions."
+
+        local subsequent_action
+        local action_found=0
+
+        for subsequent_action in "${IP_ACTION_LIST[@]}"; do
+            if [[ ${action_found} -eq 0 ]] && [[ "${subsequent_action}" == "${action}" ]]; then # this expects that 2 identical actions cannot exist
+                action_found=1
+                continue
+            fi
+
+            if [[ ${action_found} -eq 1 ]]; then
+                saptransport::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${work_dirpath}" "${transport}" "${system}" "${subsequent_action}"
+            fi
+        done
+    fi
+}
+
+function saptransport::is_all_done() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
+    local status_filepath
+
+    for status_filepath in "${TPCP_WORK_DIRPATH}/${TPCP_STATUS_FILENAME_PART}."*; do
+        local status="$( < "${status_filepath}" )"
+
+        case "${status}" in
+            # BUG: There is a race condition due to changing status is not an atomic operation.
+            #      States FINISHED + INITIAL and FAILED + INITIAL are OK for a second.
+            #
+            # "${SAPTRANSPORT_STATUS_RUNNING}" | "${SAPTRANSPORT_STATUS_INITIAL}" )
+            "${SAPTRANSPORT_STATUS_RUNNING}" )
+                logger::log "D" "Not yet done, status '${status}' is stored in '${status_filepath}'."
+
+                return 1
+            ;;
+        esac
+    done
+}

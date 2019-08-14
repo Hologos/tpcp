@@ -1,0 +1,42 @@
+#! /usr/bin/env bash
+
+TPCP_STATUS_FILENAME_PART="tpcp_statuses"
+
+function tpcp::utils::usage() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
+    >&2 echo
+    >&2 echo "Usage: $0 <transport-list> <system-list> <action-list>"
+    >&2 echo ""
+    >&2 echo "    <transport-list>"
+    >&2 echo "        List of transport names (eg: ABCK000001)."
+    >&2 echo ""
+    >&2 echo "    <system-list>"
+    >&2 echo "        List of system names in form of [SID][CLIENT] (eg: ABC000)."
+    >&2 echo ""
+    >&2 echo "    <action-list>"
+    >&2 echo "        List of actions."
+    >&2 echo ""
+    >&2 echo "        Possible values:"
+    >&2 echo "            ${SAPTRANSPORT_ACTION_CPY} - copy transport from source system to destination system"
+    >&2 echo "            ${SAPTRANSPORT_ACTION_ADD} - add transport into import queue"
+    >&2 echo "            ${SAPTRANSPORT_ACTION_IMP} - import transport into system"
+    >&2 echo "            ${SAPTRANSPORT_ACTION_DEL} - delete transport from import queue"
+}
+
+function tpcp::utils::terminate() {
+    logger::log "T" "Running ${FUNCNAME}():"
+
+    if [[ ${#} -eq 0 ]]; then
+        logger::log "T" "   [no-params]"
+    else
+        local message="${1}"
+
+        logger::log "T" "   message=${message}"
+
+        logger::log "C" "${message}"
+    fi
+
+    exit 1
+}
