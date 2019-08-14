@@ -61,7 +61,7 @@ function saptransport::__run_action_on_system() {
 
     logger::log "D" "Running action ${action} for transport ${transport} on system ${system}."
 
-    tpcp::utils::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+    saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
     local sid="${system,,}"
     local ssh_user="${sid:0:3}adm"
@@ -107,12 +107,72 @@ function saptransport::__run_action_on_system() {
     || rc=1
 
     if [[ ${rc} -eq 0 ]]; then
-        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+        saptransport::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
         return
     else
-        tpcp::utils::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
         return 1
     fi
+}
+
+function saptransport::record_status() {
+    local status="${1}"
+    local work_dirpath="${2}"
+    local transport="${3}"
+    local system="${4}"
+    local action="${5}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   status=${status}"
+    logger::log "T" "   work_dirpath=${work_dirpath}"
+    logger::log "T" "   transport=${transport}"
+    logger::log "T" "   system=${system}"
+    logger::log "T" "   action=${action}"
+
+    logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
+
+    echo "${status}" > "${work_dirpath}/${TPCP_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+
+    if [[ "${status}" == "${SAPTRANSPORT_STATUS_FAILED}" ]]; then
+        logger::log "D" "Changing all statuses of subsequent actions."
+
+        local subsequent_action
+        local action_found=0
+
+        for subsequent_action in "${IP_ACTION_LIST[@]}"; do
+            if [[ ${action_found} -eq 0 ]] && [[ "${subsequent_action}" == "${action}" ]]; then # this expects that 2 identical actions cannot exist
+                action_found=1
+                continue
+            fi
+
+            if [[ ${action_found} -eq 1 ]]; then
+                saptransport::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${work_dirpath}" "${transport}" "${system}" "${subsequent_action}"
+            fi
+        done
+    fi
+}
+
+function saptransport::is_all_done() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
+    local status_filepath
+
+    for status_filepath in "${TPCP_WORK_DIRPATH}/${TPCP_STATUS_FILENAME_PART}."*; do
+        local status="$( < "${status_filepath}" )"
+
+        case "${status}" in
+            # BUG: There is a race condition due to changing status is not an atomic operation.
+            #      States FINISHED + INITIAL and FAILED + INITIAL are OK for a second.
+            #
+            # "${SAPTRANSPORT_STATUS_RUNNING}" | "${SAPTRANSPORT_STATUS_INITIAL}" )
+            "${SAPTRANSPORT_STATUS_RUNNING}" )
+                logger::log "D" "Not yet done, status '${status}' is stored in '${status_filepath}'."
+
+                return 1
+            ;;
+        esac
+    done
 }

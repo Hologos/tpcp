@@ -58,7 +58,7 @@ fi
 for transport in "${IP_TRANSPORT_LIST[@]}"; do
     for system in "${IP_SYSTEM_LIST[@]}"; do
         for action in "${IP_ACTION_LIST[@]}"; do
-            tpcp::utils::record_status "${SAPTRANSPORT_STATUS_INITIAL}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+            saptransport::record_status "${SAPTRANSPORT_STATUS_INITIAL}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
         done
     done
 done
@@ -74,7 +74,7 @@ while : ; do
     tpcp::renderer::render
 
     # BUG: When job dies, its status doesn't change and this function will return false forever
-    if tpcp::utils::is_all_done; then
+    if saptransport::is_all_done; then
         sleep 1
         tpcp::renderer::render
         break
