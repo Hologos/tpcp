@@ -1,6 +1,10 @@
 #! /usr/bin/env bash
 
+TPCP_RENDERER_ALREADY_RENDERED=0
+
 function tpcp::renderer::render() {
+    tpcp::renderer::__clear_previous_output "${#IP_TRANSPORT_LIST[@]}" "${#IP_SYSTEM_LIST[@]}"
+
     for transport in "${IP_TRANSPORT_LIST[@]}"; do
         logger::log "T" "Rendering output for transport ${transport}."
 
@@ -76,4 +80,34 @@ function tpcp::renderer::render() {
             echo
         done
     done
+
+    TPCP_RENDERER_ALREADY_RENDERED=1
+}
+
+function tpcp::renderer::__clear_previous_output() {
+    local number_of_transports="${1}"
+    local number_of_systems="${2}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   number_of_transports=${number_of_transports}"
+    logger::log "T" "   number_of_systems=${number_of_systems}"
+
+    # 1st line: empty
+    # 2nd line: actions
+    #     rest: system + results
+    #
+    # repeats for every transport
+    local number_of_lines=$(( (1 + 1 + ${number_of_systems} ) * ${number_of_transports} ))
+
+    logger::log "T" "Total number of rendered lines is ${number_of_lines}."
+
+    if [[ ${TPCP_RENDERER_ALREADY_RENDERED} -eq 0 ]]; then
+        for i in $(seq ${number_of_lines}); do
+            echo
+        done
+
+        ansi::deleteLines "${number_of_lines}"
+    fi
+
+    ansi::previousLine "${number_of_lines}"
 }
