@@ -11,6 +11,8 @@ SAPTRANSPORT_STATUS_FAILED="FAILED"
 SAPTRANSPORT_STATUS_FINISHED="FINISHED"
 SAPTRANSPORT_STATUS_SKIPPED="SKIPPED"
 
+SAPTRANSPORT_STATUS_FILENAME_PART="saptransport_status"
+
 function saptransport::process_transport() {
     local transport="${1}"
     local system_list=("${!2}")
@@ -63,60 +65,87 @@ function saptransport::__run_action_on_system() {
 
     saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
-    local sid="${system,,}"
-    local ssh_user="${sid:0:3}adm"
-    local ssh_host="${sid:0:3}00"
+    local SID="$(saptransport::__get_SID "${system}")"
+    local client="$(saptransport::__get_client "${system}")"
+    local sg_name="$(saptransport::__get_system_group_name "${SID}")"
+    local sg_role="$(saptransport::__get_system_group_role "${SID}")"
+    local transport_label="$(saptransport::__get_transport_label "${transport}")"
+
+    if [[ "${sg_role}" =~ ^[AB]$ ]]; then
+        local domain_controller="${sg_name}B"
+    else
+        local domain_controller="${sg_name}D"
+    fi
+
+    local ssh_user="${SID,,}adm"
+    local ssh_host="${SID,,}00"
     local ssh_port="22"
+    local ssh_commands=()
 
     case "${action}" in
         "${SAPTRANSPORT_ACTION_CPY}" )
+            # copies transport from source system
+            local SID_source="$(saptransport::__get_SID_from_transport "${transport}")"
+
+            local ssh_target_user="${ssh_user}"
+            local ssh_target_host="${ssh_host}"
+            local ssh_target_port="${ssh_port}"
+
+            local ssh_user="${SID_source,,}adm"
+            local ssh_host="${SID_source,,}00"
+            local ssh_port="22"
+
             local sleep_duration=$(( ${RANDOM} % 10 + 1 ))
             local rc_random=$(( ${RANDOM} % 7 ))
-            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
+            local rc_random=$(( ${RANDOM} % 7 ))
+            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
         ;;
 
         "${SAPTRANSPORT_ACTION_ADD}" )
             local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
             local rc_random=$(( ${RANDOM} % 7 ))
-            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
         ;;
 
         "${SAPTRANSPORT_ACTION_IMP}" )
             local sleep_duration=$(( ${RANDOM} % 20 + 1 ))
             local rc_random=$(( ${RANDOM} % 7 ))
-            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
         ;;
 
         "${SAPTRANSPORT_ACTION_DEL}" )
             local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
             local rc_random=$(( ${RANDOM} % 7 ))
-            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
         ;;
 
         * )
             tpcp::utils::terminate "'${action}' is not a valid action." # assert
     esac
 
-    local rc=0
+    local ssh_command=""
 
-    tpcp::ssh::run_command  \
-        "${ssh_user}"       \
-        "${ssh_host}"       \
-        "${ssh_port}"       \
-        "${command}"        \
-    || rc=1
+    for ssh_command in "${ssh_commands[@]}"; do
+        local rc=0
 
-    if [[ ${rc} -eq 0 ]]; then
-        saptransport::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+        tpcp::ssh::run_command  \
+            "${ssh_user}"       \
+            "${ssh_host}"       \
+            "${ssh_port}"       \
+            "${ssh_command}"    \
+        || rc=1
 
-        return
-    else
-        logger::log "W" "There was an error while running action ${action} for transport ${transport} on system ${system}."
+        if [[ ${rc} -ne 0 ]]; then
+            logger::log "W" "There was an error while running action ${action} for transport ${transport} on system ${system}."
 
-        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+            saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
-        return 1
-    fi
+            return 1
+        fi
+    done
+
+    saptransport::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 }
 
 function saptransport::record_status() {
@@ -135,17 +164,24 @@ function saptransport::record_status() {
 
     logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
 
-    echo "${status}" > "${work_dirpath}/${TPCP_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+    # NOTICE: maybe change the status of next action to RUNNING before changing status of this action
+    #         this fixes the race condition in saptransport::is_all_done()
+
+    echo "${status}" > "${work_dirpath}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
 
     if [[ "${status}" == "${SAPTRANSPORT_STATUS_FAILED}" ]]; then
         logger::log "D" "Changing all statuses of subsequent actions."
 
         local subsequent_action
         local action_found=0
+        local last_action=0
 
         for subsequent_action in "${IP_ACTION_LIST[@]}"; do
+            last_action=0
+
             if [[ ${action_found} -eq 0 ]] && [[ "${subsequent_action}" == "${action}" ]]; then # this expects that 2 identical actions cannot exist
                 action_found=1
+                last_action=1
                 continue
             fi
 
@@ -153,6 +189,11 @@ function saptransport::record_status() {
                 saptransport::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${work_dirpath}" "${transport}" "${system}" "${subsequent_action}"
             fi
         done
+
+        # assert
+        if [[ ${action_found} -eq 0 ]] && [[ ${last_action} -eq 0 ]]; then
+            logger::log "C" "Action '${action}' was not found, cannot change statuses of subsequest actions."
+        fi
     fi
 }
 
@@ -162,7 +203,7 @@ function saptransport::is_all_done() {
 
     local status_filepath
 
-    for status_filepath in "${TPCP_WORK_DIRPATH}/${TPCP_STATUS_FILENAME_PART}."*; do
+    for status_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}."*; do
         local status="$( < "${status_filepath}" )"
 
         case "${status}" in
@@ -177,4 +218,60 @@ function saptransport::is_all_done() {
             ;;
         esac
     done
+
+    logger::log "D" "Everything is done. Stopping rendering."
+}
+
+function saptransport::__get_SID() {
+    local system="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   system=${system}"
+
+    echo -n "${system:0:3}"
+}
+
+function saptransport::__get_SID_from_transport() {
+    local transport="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   transport=${transport}"
+
+    echo -n "${transport:0:3}"
+}
+
+function saptransport::__get_client() {
+    local system="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   system=${system}"
+
+    echo -n "${system:3}"
+}
+
+function saptransport::__get_system_group_name() {
+    local SID="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   SID=${SID}"
+
+    echo -n "${SID:0:2}"
+}
+
+function saptransport::__get_system_group_role() {
+    local SID="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   SID=${SID}"
+
+    echo -n "${SID:2}"
+}
+
+function saptransport::__get_transport_label() {
+    local transport="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   transport=${transport}"
+
+    echo -n "${transport:4}"
 }

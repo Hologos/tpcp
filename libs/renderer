@@ -2,6 +2,12 @@
 
 TPCP_RENDERER_ALREADY_RENDERED=0
 
+TPCP_RENDERER_SYMBOL_INITIAL=" "
+TPCP_RENDERER_SYMBOL_RUNNING="..."
+TPCP_RENDERER_SYMBOL_FINISHED="✔"
+TPCP_RENDERER_SYMBOL_FAILED="$(ansi --red --no-newline "✖")"
+TPCP_RENDERER_SYMBOL_SKIPPED="-"
+
 function tpcp::renderer::render() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   [no-params]"
@@ -47,36 +53,37 @@ function tpcp::renderer::render() {
             for action in "${IP_ACTION_LIST[@]}"; do
                 logger::log "T" "Rendering action result "${action}" for system ${system}."
 
-                local status="$( < "${TPCP_WORK_DIRPATH}/${TPCP_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" # load
+                local status="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" # load
 
+                # this has to be 4 characters long
                 case "${status}" in
                     "${SAPTRANSPORT_STATUS_INITIAL}" )
-                        line+=" "  #   indentation = 1 character
-                        line+=" "  # action result = 1 character
-                        line+="  " #   indentation = 2 characters
+                        line+=" "                                #   indentation = 1 character
+                        line+="${TPCP_RENDERER_SYMBOL_INITIAL}"  # action result = 1 character
+                        line+="  "                               #   indentation = 2 characters
                     ;;
 
                     "${SAPTRANSPORT_STATUS_RUNNING}" )
-                        line+="..."  # action result = 1 character
-                        line+=" "  #   indentation = 1 character
+                        line+="${TPCP_RENDERER_SYMBOL_RUNNING}"  # action result = 3 characters
+                        line+=" "                                #   indentation = 1 character
                     ;;
 
                     "${SAPTRANSPORT_STATUS_FAILED}" )
-                        line+=" "  #   indentation = 1 character
-                        line+="✖"  # action result = 1 character
-                        line+="  " #   indentation = 2 characters
+                        line+=" "                                #   indentation = 1 character
+                        line+="${TPCP_RENDERER_SYMBOL_FAILED}"   # action result = 1 character
+                        line+="  "                               #   indentation = 2 characters
                     ;;
 
                     "${SAPTRANSPORT_STATUS_FINISHED}" )
-                        line+=" "  #   indentation = 1 character
-                        line+="✔"  # action result = 1 character
-                        line+="  " #   indentation = 2 characters
+                        line+=" "                                #   indentation = 1 character
+                        line+="${TPCP_RENDERER_SYMBOL_FINISHED}" # action result = 1 character
+                        line+="  "                               #   indentation = 2 characters
                     ;;
 
                     "${SAPTRANSPORT_STATUS_SKIPPED}" )
-                        line+=" "  #   indentation = 1 character
-                        line+="-"  # action result = 1 character
-                        line+="  " #   indentation = 2 characters
+                        line+=" "                                #   indentation = 1 character
+                        line+="${TPCP_RENDERER_SYMBOL_SKIPPED}"  # action result = 1 character
+                        line+="  "                               #   indentation = 2 characters
                     ;;
 
                     *)
@@ -108,6 +115,7 @@ function tpcp::renderer::__clear_previous_output() {
 
     logger::log "T" "Total number of rendered lines is ${number_of_lines}."
 
+    # prepares 'canvas' for the output
     if [[ ${TPCP_RENDERER_ALREADY_RENDERED} -eq 0 ]]; then
         for i in $(seq ${number_of_lines}); do
             echo

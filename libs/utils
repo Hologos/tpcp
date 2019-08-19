@@ -1,7 +1,5 @@
 #! /usr/bin/env bash
 
-TPCP_STATUS_FILENAME_PART="tpcp_statuses"
-
 function tpcp::utils::usage() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   [no-params]"
