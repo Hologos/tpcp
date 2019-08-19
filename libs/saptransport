@@ -11,6 +11,8 @@ SAPTRANSPORT_STATUS_FAILED="FAILED"
 SAPTRANSPORT_STATUS_FINISHED="FINISHED"
 SAPTRANSPORT_STATUS_SKIPPED="SKIPPED"
 
+SAPTRANSPORT_STATUS_FILENAME_PART="saptransport_status"
+
 function saptransport::process_transport() {
     local transport="${1}"
     local system_list=("${!2}")
@@ -153,7 +155,7 @@ function saptransport::record_status() {
     # NOTICE: maybe change the status of next action to RUNNING before changing status of this action
     #         this fixes the race condition in saptransport::is_all_done()
 
-    echo "${status}" > "${work_dirpath}/${TPCP_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+    echo "${status}" > "${work_dirpath}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
 
     if [[ "${status}" == "${SAPTRANSPORT_STATUS_FAILED}" ]]; then
         logger::log "D" "Changing all statuses of subsequent actions."
@@ -180,7 +182,7 @@ function saptransport::is_all_done() {
 
     local status_filepath
 
-    for status_filepath in "${TPCP_WORK_DIRPATH}/${TPCP_STATUS_FILENAME_PART}."*; do
+    for status_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}."*; do
         local status="$( < "${status_filepath}" )"
 
         case "${status}" in
