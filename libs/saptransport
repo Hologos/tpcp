@@ -68,6 +68,12 @@ function saptransport::__run_action_on_system() {
     local sg_name="$(saptransport::__get_system_group_name "${SID}")"
     local sg_role="$(saptransport::__get_system_group_role "${SID}")"
 
+    if [[ "${sg_role}" =~ ^[AB]$ ]]; then
+        local domain_controller="${sg_name}B"
+    else
+        local domain_controller="${sg_name}D"
+    fi
+
     local ssh_user="${SID,,}adm"
     local ssh_host="${SID,,}00"
     local ssh_port="22"
