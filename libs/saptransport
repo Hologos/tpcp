@@ -63,9 +63,13 @@ function saptransport::__run_action_on_system() {
 
     saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
-    local sid="${system,,}"
-    local ssh_user="${sid:0:3}adm"
-    local ssh_host="${sid:0:3}00"
+    local SID="$(saptransport::__get_SID "${system}")"
+    local client="$(saptransport::__get_client "${system}")"
+    local sg_name="$(saptransport::__get_system_group_name "${SID}")"
+    local sg_role="$(saptransport::__get_system_group_role "${SID}")"
+
+    local ssh_user="${SID,,}adm"
+    local ssh_host="${SID,,}00"
     local ssh_port="22"
 
     case "${action}" in
@@ -177,4 +181,40 @@ function saptransport::is_all_done() {
             ;;
         esac
     done
+}
+
+function saptransport::__get_SID() {
+    local system="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   system=${system}"
+
+    echo -n "${system:0:3}"
+}
+
+function saptransport::__get_client() {
+    local system="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   system=${system}"
+
+    echo -n "${system:3}"
+}
+
+function saptransport::__get_system_group_name() {
+    local SID="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   SID=${SID}"
+
+    echo -n "${SID:0:2}"
+}
+
+function saptransport::__get_system_group_role() {
+    local SID="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   SID=${SID}"
+
+    echo -n "${SID:2}"
 }
