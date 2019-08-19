@@ -14,12 +14,18 @@ function tpcp::renderer::render() {
 
     tpcp::renderer::__clear_previous_output "${#IP_TRANSPORT_LIST[@]}" "${#IP_SYSTEM_LIST[@]}"
 
+    local transport_index=0
+
     for transport in "${IP_TRANSPORT_LIST[@]}"; do
         logger::log "T" "Rendering output for transport ${transport}."
 
+        transport_index=$(( ${transport_index} + 1 ))
+
         local line=""
 
-        echo
+        if [[ ${transport_index} -eq 0 ]]; then
+            echo
+        fi
 
         line+="          " # transport name = 10 characters
         line+="     "      #    indentation =  5 characters
@@ -30,9 +36,11 @@ function tpcp::renderer::render() {
             line+=" ${action}"
         done
 
-        echo "${line}"
+        if [[ ${transport_index} -eq 0 ]]; then
+            echo "${line}"
+        fi
 
-        system_index=0
+        local system_index=0
 
         for system in "${IP_SYSTEM_LIST[@]}"; do
             logger::log "T" "Rendering action results for system ${system}."
