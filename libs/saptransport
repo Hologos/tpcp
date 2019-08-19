@@ -115,29 +115,20 @@ function saptransport::__run_action_on_system() {
             local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${SID_source}]}"
             local ssh_port="22"
 
-            local sleep_duration=$(( ${RANDOM} % 10 + 1 ))
-            local rc_random=$(( ${RANDOM} % 7 ))
-            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
-            local rc_random=$(( ${RANDOM} % 7 ))
-            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
+            ssh_commands+=("scp -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/cofiles/K${transport_label}.${SID_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/cofiles/")
+            ssh_commands+=("scp -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/data/R${transport_label}.${SID_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/data/")
         ;;
 
         "${SAPTRANSPORT_ACTION_ADD}" )
-            local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
-            local rc_random=$(( ${RANDOM} % 7 ))
-            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
+            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp ADDTOBUFFER ${transport} ${SID} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         "${SAPTRANSPORT_ACTION_IMP}" )
-            local sleep_duration=$(( ${RANDOM} % 20 + 1 ))
-            local rc_random=$(( ${RANDOM} % 7 ))
-            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
+            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp IMPORT ${transport} ${SID} client=${client} U128 pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         "${SAPTRANSPORT_ACTION_DEL}" )
-            local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
-            local rc_random=$(( ${RANDOM} % 7 ))
-            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
+            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp DELFROMBUFFER ${transport} ${SID} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         * )
