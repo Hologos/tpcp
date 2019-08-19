@@ -9,7 +9,7 @@ function tpcp::inputparser::parse_transport_list() {
     for transport in ${transport_list}; do
         logger::log "D" "Validating transport ${transport}."
 
-        if ! [[ "${transport}" =~ ^[A-Z0-9]{3}K[0-9]{6}$ ]]; then
+        if ! [[ "${transport}" =~ ^[A-Z0-9]{3}K[A-Z0-9]{6}$ ]]; then
             tpcp::utils::terminate "'${transport}' is not a valid transport name."
         fi
 
