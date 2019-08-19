@@ -150,6 +150,9 @@ function saptransport::record_status() {
 
     logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
 
+    # NOTICE: maybe change the status of next action to RUNNING before changing status of this action
+    #         this fixes the race condition in saptransport::is_all_done()
+
     echo "${status}" > "${work_dirpath}/${TPCP_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
 
     if [[ "${status}" == "${SAPTRANSPORT_STATUS_FAILED}" ]]; then
