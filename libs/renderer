@@ -115,6 +115,7 @@ function tpcp::renderer::__clear_previous_output() {
 
     logger::log "T" "Total number of rendered lines is ${number_of_lines}."
 
+    # prepares 'canvas' for the output
     if [[ ${TPCP_RENDERER_ALREADY_RENDERED} -eq 0 ]]; then
         for i in $(seq ${number_of_lines}); do
             echo
