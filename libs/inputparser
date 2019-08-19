@@ -6,6 +6,10 @@ function tpcp::inputparser::parse_transport_list() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   transport_list=${transport_list}"
 
+    if tpcp::utils::contains_duplicates "${transport_list}"; then
+        tpcp::utils::terminate "Transport list cannot have duplicates."
+    fi
+
     for transport in ${transport_list}; do
         logger::log "D" "Validating transport ${transport}."
 
@@ -23,6 +27,10 @@ function tpcp::inputparser::parse_system_list() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   system_list=${system_list}"
 
+    if tpcp::utils::contains_duplicates "${system_list}"; then
+        tpcp::utils::terminate "System list cannot have duplicates."
+    fi
+
     for system in ${system_list}; do
         logger::log "D" "Validating system ${system}."
 
@@ -39,6 +47,10 @@ function tpcp::inputparser::parse_action_list() {
 
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   action_list=${action_list}"
+
+    if tpcp::utils::contains_duplicates "${action_list}"; then
+        tpcp::utils::terminate "Action list cannot have duplicates."
+    fi
 
     for action in ${action_list}; do
         logger::log "D" "Validating action ${action}."
