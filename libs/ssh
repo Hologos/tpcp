@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 # TODO: save to process workdir
-TPCP_SSH_MASTER_CONTROL_SOCKET_FILEPATH="/tmp/ssh-master-control-%r@%h:%p"
+SSH_MASTER_CONTROL_SOCKET_FILEPATH="/tmp/ssh-master-control-%r@%h:%p"
 
 function tpcp::ssh::__close_master_connection() {
     local user="${1}"
@@ -18,7 +18,7 @@ function tpcp::ssh::__close_master_connection() {
     ssh                                                 \
         -o ConnectTimeout=5                             \
         -o BatchMode=yes                                \
-        -S "${TPCP_SSH_MASTER_CONTROL_SOCKET_FILEPATH}" \
+        -S "${SSH_MASTER_CONTROL_SOCKET_FILEPATH}"      \
         -p "${port}"                                    \
                                                         \
         -O stop                                         \
@@ -39,7 +39,7 @@ function tpcp::ssh::__is_master_connection_alive() {
     ssh                                                 \
         -o ConnectTimeout=5                             \
         -o BatchMode=yes                                \
-        -S "${TPCP_SSH_MASTER_CONTROL_SOCKET_FILEPATH}" \
+        -S "${SSH_MASTER_CONTROL_SOCKET_FILEPATH}"      \
         -p "${port}"                                    \
                                                         \
         -O check                                        \
@@ -73,7 +73,7 @@ function tpcp::ssh::__create_master_connection() {
         -o ControlMaster=yes                            \
         -o ControlPersist=2m                            \
         -o BatchMode=yes                                \
-        -S "${TPCP_SSH_MASTER_CONTROL_SOCKET_FILEPATH}" \
+        -S "${SSH_MASTER_CONTROL_SOCKET_FILEPATH}"      \
         -p "${port}"                                    \
                                                         \
         "${user}"@"${host}" &> /dev/null
@@ -106,7 +106,7 @@ function tpcp::ssh::run_command() {
     ssh                                                 \
         -o ConnectTimeout=5                             \
         -o BatchMode=yes                                \
-        -S "${TPCP_SSH_MASTER_CONTROL_SOCKET_FILEPATH}" \
+        -S "${SSH_MASTER_CONTROL_SOCKET_FILEPATH}"      \
         -p "${port}"                                    \
                                                         \
         "${user}"@"${host}"                             \
