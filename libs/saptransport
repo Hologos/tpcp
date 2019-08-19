@@ -77,56 +77,61 @@ function saptransport::__run_action_on_system() {
     local ssh_user="${SID,,}adm"
     local ssh_host="${SID,,}00"
     local ssh_port="22"
+    local ssh_commands=()
 
     case "${action}" in
         "${SAPTRANSPORT_ACTION_CPY}" )
             local sleep_duration=$(( ${RANDOM} % 10 + 1 ))
             local rc_random=$(( ${RANDOM} % 7 ))
-            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
+            local rc_random=$(( ${RANDOM} % 7 ))
+            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
         ;;
 
         "${SAPTRANSPORT_ACTION_ADD}" )
             local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
             local rc_random=$(( ${RANDOM} % 7 ))
-            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
         ;;
 
         "${SAPTRANSPORT_ACTION_IMP}" )
             local sleep_duration=$(( ${RANDOM} % 20 + 1 ))
             local rc_random=$(( ${RANDOM} % 7 ))
-            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
         ;;
 
         "${SAPTRANSPORT_ACTION_DEL}" )
             local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
             local rc_random=$(( ${RANDOM} % 7 ))
-            local command="sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]"
+            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
         ;;
 
         * )
             tpcp::utils::terminate "'${action}' is not a valid action." # assert
     esac
 
-    local rc=0
+    local ssh_command=""
 
-    tpcp::ssh::run_command  \
-        "${ssh_user}"       \
-        "${ssh_host}"       \
-        "${ssh_port}"       \
-        "${command}"        \
-    || rc=1
+    for ssh_command in "${ssh_commands[@]}"; do
+        local rc=0
 
-    if [[ ${rc} -eq 0 ]]; then
-        saptransport::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+        tpcp::ssh::run_command  \
+            "${ssh_user}"       \
+            "${ssh_host}"       \
+            "${ssh_port}"       \
+            "${ssh_command}"    \
+        || rc=1
 
-        return
-    else
-        logger::log "W" "There was an error while running action ${action} for transport ${transport} on system ${system}."
+        if [[ ${rc} -ne 0 ]]; then
+            logger::log "W" "There was an error while running action ${action} for transport ${transport} on system ${system}."
 
-        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+            saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
-        return 1
-    fi
+            return 1
+        fi
+    done
+
+    saptransport::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 }
 
 function saptransport::record_status() {
