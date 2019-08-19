@@ -10,6 +10,8 @@ function tpcp::inputparser::parse_transport_list() {
         tpcp::utils::terminate "Transport list cannot have duplicates."
     fi
 
+    local transport=""
+
     for transport in ${transport_list}; do
         logger::log "D" "Validating transport ${transport}."
 
@@ -31,6 +33,8 @@ function tpcp::inputparser::parse_system_list() {
         tpcp::utils::terminate "System list cannot have duplicates."
     fi
 
+    local system=""
+
     for system in ${system_list}; do
         logger::log "D" "Validating system ${system}."
 
@@ -51,6 +55,8 @@ function tpcp::inputparser::parse_action_list() {
     if tpcp::utils::contains_duplicates "${action_list}"; then
         tpcp::utils::terminate "Action list cannot have duplicates."
     fi
+
+    local action=""
 
     for action in ${action_list}; do
         logger::log "D" "Validating action ${action}."

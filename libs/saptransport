@@ -25,6 +25,8 @@ function saptransport::process_transport() {
 
     logger::log "D" "Processing transport ${transport}."
 
+    local system=""
+
     for system in "${system_list[@]}"; do
         saptransport::__run_actions_on_system "${transport}" "${system}" "${action_list[@]}" &
     done
@@ -43,6 +45,8 @@ function saptransport::__run_actions_on_system() {
     logger::log "T" "   action_list=${action_list[@]}" # TODO: FIX array
 
     logger::log "D" "Running actions for transport ${transport} on system ${system}."
+
+    local action=""
 
     for action in "${action_list[@]}"; do
         saptransport::__run_action_on_system "${transport}" "${system}" "${action}"

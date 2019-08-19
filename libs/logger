@@ -17,6 +17,8 @@ function logger::__print_call_stack() {
     >&2 echo
     >&2 echo "Stack trace:"
 
+    local i=0
+
     for (( i=$(( stack_size - 1 )); i >= 2; i-- )); do
         local function_name="${FUNCNAME[$(( i - 1 ))]:-"MAIN"}"
         local source_line_number="${BASH_LINENO[$(( i - 1 ))]}"
@@ -30,6 +32,8 @@ function logger::__print_call_stack() {
 
 function logger::__get_level_index() {
     local level="${1}"
+
+    local logger_level_index=0
 
     for logger_level_index in "${!_LOGGER_LEVELS_MAP[@]}"; do
         if [[ "${_LOGGER_LEVELS_MAP[${logger_level_index}]}" == "${level}" ]]; then
