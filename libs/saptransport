@@ -181,6 +181,8 @@ function saptransport::is_all_done() {
             ;;
         esac
     done
+
+    logger::log "D" "Everything is done. Stopping rendering."
 }
 
 function saptransport::__get_SID() {
