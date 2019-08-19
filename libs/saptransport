@@ -174,10 +174,14 @@ function saptransport::record_status() {
 
         local subsequent_action
         local action_found=0
+        local last_action=0
 
         for subsequent_action in "${IP_ACTION_LIST[@]}"; do
+            last_action=0
+
             if [[ ${action_found} -eq 0 ]] && [[ "${subsequent_action}" == "${action}" ]]; then # this expects that 2 identical actions cannot exist
                 action_found=1
+                last_action=1
                 continue
             fi
 
@@ -185,6 +189,11 @@ function saptransport::record_status() {
                 saptransport::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${work_dirpath}" "${transport}" "${system}" "${subsequent_action}"
             fi
         done
+
+        # assert
+        if [[ ${action_found} -eq 0 ]] && [[ ${last_action} -eq 0 ]]; then
+            logger::log "C" "Action '${action}' was not found, cannot change statuses of subsequest actions."
+        fi
     fi
 }
 
