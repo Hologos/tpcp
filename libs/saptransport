@@ -44,8 +44,6 @@ function saptransport::__run_actions_on_system() {
 
     logger::log "D" "Running actions for transport ${transport} on system ${system}."
 
-    # TODO: implement heartbeats
-
     for action in "${action_list[@]}"; do
         saptransport::__run_action_on_system "${transport}" "${system}" "${action}"
     done
@@ -162,19 +160,13 @@ function saptransport::record_status() {
     logger::log "T" "   system=${system}"
     logger::log "T" "   action=${action}"
 
-    logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
+    local subsequent_action
+    local action_found=0
+    local last_action=0
 
-    # NOTICE: maybe change the status of next action to RUNNING before changing status of this action
-    #         this fixes the race condition in saptransport::is_all_done()
-
-    echo "${status}" > "${work_dirpath}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
-
+    # FIX: set status of subsequent action(s) first to fix the race condition in saptransport::is_all_done()
     if [[ "${status}" == "${SAPTRANSPORT_STATUS_FAILED}" ]]; then
         logger::log "D" "Changing all statuses of subsequent actions."
-
-        local subsequent_action
-        local action_found=0
-        local last_action=0
 
         for subsequent_action in "${IP_ACTION_LIST[@]}"; do
             last_action=0
@@ -189,12 +181,34 @@ function saptransport::record_status() {
                 saptransport::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${work_dirpath}" "${transport}" "${system}" "${subsequent_action}"
             fi
         done
+    elif [[ "${status}" == "${SAPTRANSPORT_STATUS_FINISHED}" ]]; then
+        logger::log "D" "Changing status of subsequent action for finished action."
 
-        # assert
-        if [[ ${action_found} -eq 0 ]] && [[ ${last_action} -eq 0 ]]; then
-            logger::log "C" "Action '${action}' was not found, cannot change statuses of subsequest actions."
-        fi
+        for subsequent_action in "${IP_ACTION_LIST[@]}"; do
+            last_action=0
+
+            if [[ ${action_found} -eq 0 ]] && [[ "${subsequent_action}" == "${action}" ]]; then # this expects that 2 identical actions cannot exist
+                action_found=1
+                last_action=1
+                continue
+            fi
+
+            if [[ ${action_found} -eq 1 ]]; then
+                saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${work_dirpath}" "${transport}" "${system}" "${subsequent_action}"
+                break
+            fi
+        done
     fi
+
+    # assert
+    if [[ ${action_found} -eq 0 ]] && [[ ${last_action} -eq 0 ]]; then
+        logger::log "C" "Action '${action}' was not found, cannot change status of subsequest action(s)."
+    fi
+
+    logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
+
+    # FIX: set status of current action as last thing to fix the race condition in saptransport::is_all_done()
+    echo "${status}" > "${work_dirpath}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
 }
 
 function saptransport::is_all_done() {
@@ -207,10 +221,8 @@ function saptransport::is_all_done() {
         local status="$( < "${status_filepath}" )"
 
         case "${status}" in
-            # BUG: There is a race condition due to changing status is not an atomic operation.
-            #      States FINISHED + INITIAL and FAILED + INITIAL are OK for a second.
-            #
-            # "${SAPTRANSPORT_STATUS_RUNNING}" | "${SAPTRANSPORT_STATUS_INITIAL}" )
+            # FIX: There was a race condition due to changing status is not an atomic operation.
+            #      The status of subsequent action is changed first to fix thix.
             "${SAPTRANSPORT_STATUS_RUNNING}" )
                 logger::log "D" "Not yet done, status '${status}' is stored in '${status_filepath}'."
 
