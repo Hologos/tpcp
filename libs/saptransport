@@ -69,6 +69,7 @@ function saptransport::__run_action_on_system() {
     local client="$(saptransport::__get_client "${system}")"
     local sg_name="$(saptransport::__get_system_group_name "${SID}")"
     local sg_role="$(saptransport::__get_system_group_role "${SID}")"
+    local transport_label="$(saptransport::__get_transport_label "${transport}")"
 
     if [[ "${sg_role}" =~ ^[AB]$ ]]; then
         local domain_controller="${sg_name}B"
@@ -83,6 +84,17 @@ function saptransport::__run_action_on_system() {
 
     case "${action}" in
         "${SAPTRANSPORT_ACTION_CPY}" )
+            # copies transport from source system
+            local SID_source="$(saptransport::__get_SID_from_transport "${transport}")"
+
+            local ssh_target_user="${ssh_user}"
+            local ssh_target_host="${ssh_host}"
+            local ssh_target_port="${ssh_port}"
+
+            local ssh_user="${SID_source,,}adm"
+            local ssh_host="${SID_source,,}00"
+            local ssh_port="22"
+
             local sleep_duration=$(( ${RANDOM} % 10 + 1 ))
             local rc_random=$(( ${RANDOM} % 7 ))
             ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
@@ -210,6 +222,15 @@ function saptransport::__get_SID() {
     echo -n "${system:0:3}"
 }
 
+function saptransport::__get_SID_from_transport() {
+    local transport="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   transport=${transport}"
+
+    echo -n "${transport:0:3}"
+}
+
 function saptransport::__get_client() {
     local system="${1}"
 
@@ -235,4 +256,13 @@ function saptransport::__get_system_group_role() {
     logger::log "T" "   SID=${SID}"
 
     echo -n "${SID:2}"
+}
+
+function saptransport::__get_transport_label() {
+    local transport="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   transport=${transport}"
+
+    echo -n "${transport:4}"
 }
