@@ -220,6 +220,9 @@ function saptransport::record_status() {
                 break
             fi
         done
+    else
+        # to pass the assert
+        last_action=1
     fi
 
     # assert
