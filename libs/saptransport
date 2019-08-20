@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+declare -A SAPTRANSPORT_HOSTNAMES_MAP
+
 SAPTRANSPORT_ACTION_CPY="CPY"
 SAPTRANSPORT_ACTION_ADD="ADD"
 SAPTRANSPORT_ACTION_IMP="IMP"
@@ -79,8 +81,16 @@ function saptransport::__run_action_on_system() {
         local domain_controller="${sg_name}D"
     fi
 
+    if ! saptransport::__hostname_exists "${SID}"; then
+        logger::log "C" "Hostname for SID ${SID} not found."
+
+        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return 1
+    fi
+
     local ssh_user="${SID,,}adm"
-    local ssh_host="${SID,,}00"
+    local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${SID}]}"
     local ssh_port="22"
     local ssh_commands=()
 
@@ -89,12 +99,20 @@ function saptransport::__run_action_on_system() {
             # copies transport from source system
             local SID_source="$(saptransport::__get_SID_from_transport "${transport}")"
 
+            if ! saptransport::__hostname_exists "${SID_source}"; then
+                logger::log "C" "Hostname for SID ${SID_source} not found."
+
+                saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+                return 1
+            fi
+
             local ssh_target_user="${ssh_user}"
             local ssh_target_host="${ssh_host}"
             local ssh_target_port="${ssh_port}"
 
             local ssh_user="${SID_source,,}adm"
-            local ssh_host="${SID_source,,}00"
+            local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${SID_source}]}"
             local ssh_port="22"
 
             local sleep_duration=$(( ${RANDOM} % 10 + 1 ))
@@ -290,4 +308,58 @@ function saptransport::__get_transport_label() {
     logger::log "T" "   transport=${transport}"
 
     echo -n "${transport:4}"
+}
+
+function saptransport::__hostname_exists() {
+    local SID="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   SID=${SID}"
+
+    if ! [[ ${SAPTRANSPORT_HOSTNAMES_MAP[${SID}]+_} ]]; then
+        return 1
+    fi
+}
+
+function saptransport::load_ini_file() {
+    local filepath="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   filepath=${filepath}"
+
+    logger::log "D" "Loading file ${filepath}."
+
+    if [[ ! -r "${filepath}" ]]; then
+        tpcp::utils::terminate "Cannot read ini file ${filepath}."
+    fi
+
+    local line=""
+    local line_number=0
+
+    while read line; do
+        line_number="$(( ${line_number} + 1 ))"
+
+        logger::log "D" "Reading line #${line_number} '${line}'."
+
+        # skip lines beginning with ; (semicolon)
+        # skip empty lines or containing only whitespaces
+        if [[ "${line}" =~ ^\; ]] || [[ "${line}" =~ ^[[:space:]]*$ ]]; then
+            logger::log "D" "Skipping line #${line_number} '${line}'."
+
+            continue
+        fi
+
+        # SID=hostname
+        if ! [[ ${line} =~ ^[A-Z0-9]{3}=(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$ ]]; then
+            tpcp::utils::terminate "Malformed ini file ${filepath}, line #${line_number} '${line}'."
+        fi
+
+        local SID="$(echo -n "${line}" | cut -d "=" -f 1)"
+        local hostname="$(echo -n "${line}" | cut -d "=" -f 2)"
+
+        logger::log "D" "SID=${SID}"
+        logger::log "D" "hostname=${hostname}"
+
+        SAPTRANSPORT_HOSTNAMES_MAP[${SID}]="${hostname}"
+    done < "${filepath}"
 }
