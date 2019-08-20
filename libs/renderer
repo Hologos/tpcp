@@ -14,6 +14,8 @@ function tpcp::renderer::render() {
 
     tpcp::renderer::__clear_previous_output "${#IP_TRANSPORT_LIST[@]}" "${#IP_SYSTEM_LIST[@]}"
 
+    local transport=""
+
     for transport in "${IP_TRANSPORT_LIST[@]}"; do
         logger::log "T" "Rendering output for transport ${transport}."
 
@@ -26,13 +28,16 @@ function tpcp::renderer::render() {
         line+="      "     #    system name =  6 characters
         line+="    "       #    indentation =  4 characters
 
+        local action=""
+
         for action in "${IP_ACTION_LIST[@]}"; do
             line+=" ${action}"
         done
 
         echo "${line}"
 
-        system_index=0
+        local system=""
+        local system_index=0
 
         for system in "${IP_SYSTEM_LIST[@]}"; do
             logger::log "T" "Rendering action results for system ${system}."
@@ -117,6 +122,8 @@ function tpcp::renderer::__clear_previous_output() {
 
     # prepares 'canvas' for the output
     if [[ ${TPCP_RENDERER_ALREADY_RENDERED} -eq 0 ]]; then
+        local i=0
+
         for i in $(seq ${number_of_lines}); do
             echo
         done

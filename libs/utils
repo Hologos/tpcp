@@ -38,3 +38,16 @@ function tpcp::utils::terminate() {
 
     exit 1
 }
+
+function tpcp::utils::contains_duplicates() {
+    local string="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   string=${string}"
+
+    if [[ "$(echo -n "${string}" | tr ' ' "\n" | sort | uniq -d)" != "" ]]; then
+        return 0
+    fi
+
+    return 1
+}

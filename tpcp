@@ -48,6 +48,12 @@ tpcp::inputparser::parse_action_list "${3}"
 
 # -- main program -------------------------------------------------------------
 
+if ! [[ ${TPCP_CONFIG_FILEPATH+_} ]]; then
+    tpcp::utils::terminate "Environment variable TPCP_CONFIG_FILEPATH is not set."
+fi
+
+saptransport::load_ini_file "${TPCP_CONFIG_FILEPATH}"
+
 TPCP_WORK_DIRPATH="/tmp/tpcp.${RANDOM}.${$}"
 
 if [[ ! -d "${TPCP_WORK_DIRPATH}" ]]; then

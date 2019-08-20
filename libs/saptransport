@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+declare -A SAPTRANSPORT_HOSTNAMES_MAP
+
 SAPTRANSPORT_ACTION_CPY="CPY"
 SAPTRANSPORT_ACTION_ADD="ADD"
 SAPTRANSPORT_ACTION_IMP="IMP"
@@ -25,6 +27,8 @@ function saptransport::process_transport() {
 
     logger::log "D" "Processing transport ${transport}."
 
+    local system=""
+
     for system in "${system_list[@]}"; do
         saptransport::__run_actions_on_system "${transport}" "${system}" "${action_list[@]}" &
     done
@@ -44,7 +48,7 @@ function saptransport::__run_actions_on_system() {
 
     logger::log "D" "Running actions for transport ${transport} on system ${system}."
 
-    # TODO: implement heartbeats
+    local action=""
 
     for action in "${action_list[@]}"; do
         saptransport::__run_action_on_system "${transport}" "${system}" "${action}"
@@ -77,8 +81,16 @@ function saptransport::__run_action_on_system() {
         local domain_controller="${sg_name}D"
     fi
 
+    if ! saptransport::__hostname_exists "${SID}"; then
+        logger::log "C" "Hostname for SID ${SID} not found."
+
+        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return 1
+    fi
+
     local ssh_user="${SID,,}adm"
-    local ssh_host="${SID,,}00"
+    local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${SID}]}"
     local ssh_port="22"
     local ssh_commands=()
 
@@ -87,37 +99,36 @@ function saptransport::__run_action_on_system() {
             # copies transport from source system
             local SID_source="$(saptransport::__get_SID_from_transport "${transport}")"
 
+            if ! saptransport::__hostname_exists "${SID_source}"; then
+                logger::log "C" "Hostname for SID ${SID_source} not found."
+
+                saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+                return 1
+            fi
+
             local ssh_target_user="${ssh_user}"
             local ssh_target_host="${ssh_host}"
             local ssh_target_port="${ssh_port}"
 
             local ssh_user="${SID_source,,}adm"
-            local ssh_host="${SID_source,,}00"
+            local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${SID_source}]}"
             local ssh_port="22"
 
-            local sleep_duration=$(( ${RANDOM} % 10 + 1 ))
-            local rc_random=$(( ${RANDOM} % 7 ))
-            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
-            local rc_random=$(( ${RANDOM} % 7 ))
-            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
+            ssh_commands+=("scp -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/cofiles/K${transport_label}.${SID_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/cofiles/")
+            ssh_commands+=("scp -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/data/R${transport_label}.${SID_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/data/")
         ;;
 
         "${SAPTRANSPORT_ACTION_ADD}" )
-            local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
-            local rc_random=$(( ${RANDOM} % 7 ))
-            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
+            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp ADDTOBUFFER ${transport} ${SID} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         "${SAPTRANSPORT_ACTION_IMP}" )
-            local sleep_duration=$(( ${RANDOM} % 20 + 1 ))
-            local rc_random=$(( ${RANDOM} % 7 ))
-            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
+            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp IMPORT ${transport} ${SID} client=${client} U128 pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         "${SAPTRANSPORT_ACTION_DEL}" )
-            local sleep_duration=$(( ${RANDOM} % 2 + 1 ))
-            local rc_random=$(( ${RANDOM} % 7 ))
-            ssh_commands+=("sleep '${sleep_duration}'; [ '${rc_random}' -ne 0 ]")
+            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp DELFROMBUFFER ${transport} ${SID} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         * )
@@ -162,19 +173,13 @@ function saptransport::record_status() {
     logger::log "T" "   system=${system}"
     logger::log "T" "   action=${action}"
 
-    logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
+    local subsequent_action
+    local action_found=0
+    local last_action=0
 
-    # NOTICE: maybe change the status of next action to RUNNING before changing status of this action
-    #         this fixes the race condition in saptransport::is_all_done()
-
-    echo "${status}" > "${work_dirpath}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
-
+    # FIX: set status of subsequent action(s) first to fix the race condition in saptransport::is_all_done()
     if [[ "${status}" == "${SAPTRANSPORT_STATUS_FAILED}" ]]; then
-        logger::log "D" "Changing all statuses of subsequent actions."
-
-        local subsequent_action
-        local action_found=0
-        local last_action=0
+        logger::log "D" "Changing all statuses of subsequent actions to ${SAPTRANSPORT_STATUS_SKIPPED}."
 
         for subsequent_action in "${IP_ACTION_LIST[@]}"; do
             last_action=0
@@ -189,12 +194,37 @@ function saptransport::record_status() {
                 saptransport::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${work_dirpath}" "${transport}" "${system}" "${subsequent_action}"
             fi
         done
+    elif [[ "${status}" == "${SAPTRANSPORT_STATUS_FINISHED}" ]]; then
+        logger::log "D" "Changing status of subsequent action to ${SAPTRANSPORT_STATUS_RUNNING} for finished action."
 
-        # assert
-        if [[ ${action_found} -eq 0 ]] && [[ ${last_action} -eq 0 ]]; then
-            logger::log "C" "Action '${action}' was not found, cannot change statuses of subsequest actions."
-        fi
+        for subsequent_action in "${IP_ACTION_LIST[@]}"; do
+            last_action=0
+
+            if [[ ${action_found} -eq 0 ]] && [[ "${subsequent_action}" == "${action}" ]]; then # this expects that 2 identical actions cannot exist
+                action_found=1
+                last_action=1
+                continue
+            fi
+
+            if [[ ${action_found} -eq 1 ]]; then
+                saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${work_dirpath}" "${transport}" "${system}" "${subsequent_action}"
+                break
+            fi
+        done
+    else
+        # to pass the assert
+        last_action=1
     fi
+
+    # assert
+    if [[ ${action_found} -eq 0 ]] && [[ ${last_action} -eq 0 ]]; then
+        tpcp::utils::terminate "Action '${action}' was not found, cannot change status of subsequest action(s)."
+    fi
+
+    logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
+
+    # FIX: set status of current action as last thing to fix the race condition in saptransport::is_all_done()
+    echo "${status}" > "${work_dirpath}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
 }
 
 function saptransport::is_all_done() {
@@ -207,10 +237,8 @@ function saptransport::is_all_done() {
         local status="$( < "${status_filepath}" )"
 
         case "${status}" in
-            # BUG: There is a race condition due to changing status is not an atomic operation.
-            #      States FINISHED + INITIAL and FAILED + INITIAL are OK for a second.
-            #
-            # "${SAPTRANSPORT_STATUS_RUNNING}" | "${SAPTRANSPORT_STATUS_INITIAL}" )
+            # FIX: There was a race condition due to changing status is not an atomic operation.
+            #      The status of subsequent action is changed first to fix thix.
             "${SAPTRANSPORT_STATUS_RUNNING}" )
                 logger::log "D" "Not yet done, status '${status}' is stored in '${status_filepath}'."
 
@@ -274,4 +302,58 @@ function saptransport::__get_transport_label() {
     logger::log "T" "   transport=${transport}"
 
     echo -n "${transport:4}"
+}
+
+function saptransport::__hostname_exists() {
+    local SID="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   SID=${SID}"
+
+    if ! [[ ${SAPTRANSPORT_HOSTNAMES_MAP[${SID}]+_} ]]; then
+        return 1
+    fi
+}
+
+function saptransport::load_ini_file() {
+    local filepath="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   filepath=${filepath}"
+
+    logger::log "D" "Loading file ${filepath}."
+
+    if [[ ! -r "${filepath}" ]]; then
+        tpcp::utils::terminate "Cannot read ini file ${filepath}."
+    fi
+
+    local line=""
+    local line_number=0
+
+    while read line; do
+        line_number="$(( ${line_number} + 1 ))"
+
+        logger::log "D" "Reading line #${line_number} '${line}'."
+
+        # skip lines beginning with ; (semicolon)
+        # skip empty lines or containing only whitespaces
+        if [[ "${line}" =~ ^\; ]] || [[ "${line}" =~ ^[[:space:]]*$ ]]; then
+            logger::log "D" "Skipping line #${line_number} '${line}'."
+
+            continue
+        fi
+
+        # SID=hostname
+        if ! [[ ${line} =~ ^[A-Z0-9]{3}=(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$ ]]; then
+            tpcp::utils::terminate "Malformed ini file ${filepath}, line #${line_number} '${line}'."
+        fi
+
+        local SID="$(echo -n "${line}" | cut -d "=" -f 1)"
+        local hostname="$(echo -n "${line}" | cut -d "=" -f 2)"
+
+        logger::log "D" "SID=${SID}"
+        logger::log "D" "hostname=${hostname}"
+
+        SAPTRANSPORT_HOSTNAMES_MAP[${SID}]="${hostname}"
+    done < "${filepath}"
 }
