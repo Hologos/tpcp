@@ -188,7 +188,7 @@ function saptransport::record_status() {
 
     # FIX: set status of subsequent action(s) first to fix the race condition in saptransport::is_all_done()
     if [[ "${status}" == "${SAPTRANSPORT_STATUS_FAILED}" ]]; then
-        logger::log "D" "Changing all statuses of subsequent actions."
+        logger::log "D" "Changing all statuses of subsequent actions to ${SAPTRANSPORT_STATUS_SKIPPED}."
 
         for subsequent_action in "${IP_ACTION_LIST[@]}"; do
             last_action=0
@@ -204,7 +204,7 @@ function saptransport::record_status() {
             fi
         done
     elif [[ "${status}" == "${SAPTRANSPORT_STATUS_FINISHED}" ]]; then
-        logger::log "D" "Changing status of subsequent action for finished action."
+        logger::log "D" "Changing status of subsequent action to ${SAPTRANSPORT_STATUS_RUNNING} for finished action."
 
         for subsequent_action in "${IP_ACTION_LIST[@]}"; do
             last_action=0
@@ -224,7 +224,7 @@ function saptransport::record_status() {
 
     # assert
     if [[ ${action_found} -eq 0 ]] && [[ ${last_action} -eq 0 ]]; then
-        logger::log "C" "Action '${action}' was not found, cannot change status of subsequest action(s)."
+        tpcp::utils::terminate "Action '${action}' was not found, cannot change status of subsequest action(s)."
     fi
 
     logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
