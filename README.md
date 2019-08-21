@@ -23,7 +23,7 @@ export TPCP_CONFIG_FILEPATH="${HOME}/.config/tpcp/system-definition.ini"
 tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
 
                           CPY ADD IMP DEL
-ABCK123456     EFG900      ✔  ✔  ...
+ABCK123456     EFG900      ✔   ✔  ...
                MNO000      ✖   -   -   -
                XYZ100      ✔   ✔   ✔   ✔
 ```
