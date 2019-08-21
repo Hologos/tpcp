@@ -398,8 +398,8 @@ function saptransport::load_ini_file() {
             tpcp::utils::terminate "Malformed ini file ${filepath}, line #${line_number} '${line}'."
         fi
 
-        local SID="$(echo -n "${line}" | cut -d "=" -f 1)"
-        local hostname="$(echo -n "${line}" | cut -d "=" -f 2)"
+        local SID="${line%=*}"
+        local hostname="${line#*=}"
 
         logger::log "D" "SID=${SID}"
         logger::log "D" "hostname=${hostname}"
