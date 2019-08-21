@@ -140,12 +140,12 @@ function saptransport::__run_action_on_system() {
     for ssh_command in "${ssh_commands[@]}"; do
         local rc=0
 
-        tpcp::ssh::run_command  \
-            "${ssh_user}"       \
-            "${ssh_host}"       \
-            "${ssh_port}"       \
-            "${ssh_command}"    \
-        || rc=1
+        tpcp::ssh::run_command_to_stderr    \
+            "${ssh_user}"                   \
+            "${ssh_host}"                   \
+            "${ssh_port}"                   \
+                                            \
+            "${ssh_command}" || rc=1
 
         if [[ ${rc} -ne 0 ]]; then
             logger::log "W" "There was an error while running action ${action} for transport ${transport} on system ${system}."
