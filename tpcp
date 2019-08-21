@@ -52,6 +52,9 @@ if ! [[ ${TPCP_CONFIG_FILEPATH+_} ]]; then
     tpcp::utils::terminate "Environment variable TPCP_CONFIG_FILEPATH is not set."
 fi
 
+echo
+echo "Loading system informations from ${TPCP_CONFIG_FILEPATH}."
+
 saptransport::load_ini_file "${TPCP_CONFIG_FILEPATH}"
 
 TPCP_WORK_DIRPATH="/tmp/tpcp.${RANDOM}.${$}"
