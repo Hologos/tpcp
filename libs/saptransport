@@ -1,6 +1,7 @@
 #! /usr/bin/env bash
 
 declare -A SAPTRANSPORT_HOSTNAMES_MAP
+declare -A SAPTRANSPORT_TRANSPORT_DOMAINS_MAP
 
 SAPTRANSPORT_ACTION_CPY="CPY"
 SAPTRANSPORT_ACTION_ADD="ADD"
@@ -75,12 +76,6 @@ function saptransport::__run_action_on_system() {
     local sg_role="$(saptransport::__get_system_group_role "${SID}")"
     local transport_label="$(saptransport::__get_transport_label "${transport}")"
 
-    if [[ "${sg_role}" =~ ^[AB]$ ]]; then
-        local domain_controller="${sg_name}B"
-    else
-        local domain_controller="${sg_name}D"
-    fi
-
     if ! saptransport::__hostname_exists "${SID}"; then
         logger::log "C" "Hostname for SID ${SID} not found."
 
@@ -93,6 +88,12 @@ function saptransport::__run_action_on_system() {
     local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${SID}]}"
     local ssh_port="22"
     local ssh_commands=()
+
+    if ! saptransport::__cache_transport_domain "${SID}" "${ssh_user}" "${ssh_host}" "${ssh_port}"; then
+        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return 1
+    fi
 
     case "${action}" in
         "${SAPTRANSPORT_ACTION_CPY}" )
@@ -120,15 +121,15 @@ function saptransport::__run_action_on_system() {
         ;;
 
         "${SAPTRANSPORT_ACTION_ADD}" )
-            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp ADDTOBUFFER ${transport} ${SID} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
+            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp ADDTOBUFFER ${transport} ${SID} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]}.PFL")
         ;;
 
         "${SAPTRANSPORT_ACTION_IMP}" )
-            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp IMPORT ${transport} ${SID} client=${client} U128 pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
+            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp IMPORT ${transport} ${SID} client=${client} U128 pf=/usr/sap/trans/bin/TP_DOMAIN_${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]}.PFL")
         ;;
 
         "${SAPTRANSPORT_ACTION_DEL}" )
-            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp DELFROMBUFFER ${transport} ${SID} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
+            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp DELFROMBUFFER ${transport} ${SID} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]}.PFL")
         ;;
 
         * )
@@ -140,12 +141,12 @@ function saptransport::__run_action_on_system() {
     for ssh_command in "${ssh_commands[@]}"; do
         local rc=0
 
-        tpcp::ssh::run_command  \
-            "${ssh_user}"       \
-            "${ssh_host}"       \
-            "${ssh_port}"       \
-            "${ssh_command}"    \
-        || rc=1
+        tpcp::ssh::run_command_to_stderr    \
+            "${ssh_user}"                   \
+            "${ssh_host}"                   \
+            "${ssh_port}"                   \
+                                            \
+            "${ssh_command}" || rc=1
 
         if [[ ${rc} -ne 0 ]]; then
             logger::log "W" "There was an error while running action ${action} for transport ${transport} on system ${system}."
@@ -304,6 +305,59 @@ function saptransport::__get_transport_label() {
     echo -n "${transport:4}"
 }
 
+function saptransport::__is_transport_domain_cached() {
+    local SID="${1}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   SID=${SID}"
+
+    if ! [[ ${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]+_} ]]; then
+        logger::log "D" "Transport domain for ${SID} isn't cached yet."
+
+        return 1
+    fi
+}
+
+function saptransport::__cache_transport_domain() {
+    local SID="${1}"
+    local ssh_user="${2}"
+    local ssh_host="${3}"
+    local ssh_port="${4}"
+
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   SID=${SID}"
+    logger::log "T" "   ssh_user=${ssh_user}"
+    logger::log "T" "   ssh_host=${ssh_host}"
+    logger::log "T" "   ssh_port=${ssh_port}"
+
+    if saptransport::__is_transport_domain_cached "${SID}"; then
+        logger::log "D" "Transport domain for ${SID} found in cache."
+
+        return
+    fi
+
+    logger::log "D" "Caching transport domain for ${SID}."
+
+    local rc=0
+    local ssh_command="egrep -o '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
+
+    tpcp::ssh::run_command  \
+                            \
+        "${ssh_user}"       \
+        "${ssh_host}"       \
+        "${ssh_port}"       \
+                            \
+        "${ssh_command}" > "${TPCP_WORK_DIRPATH}/saptransport_domain_controller_${SID}" || rc=1
+
+    if [[ ${rc} -ne 0 ]]; then
+        logger::log "C" "Cannot get domain controller for ${SID} from ${ssh_user}@${ssh_host}:${ssh_port}."
+
+        return 1
+    fi
+
+    SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]="$( < "${TPCP_WORK_DIRPATH}/saptransport_domain_controller_${SID}" )"
+}
+
 function saptransport::__hostname_exists() {
     local SID="${1}"
 
@@ -348,8 +402,8 @@ function saptransport::load_ini_file() {
             tpcp::utils::terminate "Malformed ini file ${filepath}, line #${line_number} '${line}'."
         fi
 
-        local SID="$(echo -n "${line}" | cut -d "=" -f 1)"
-        local hostname="$(echo -n "${line}" | cut -d "=" -f 2)"
+        local SID="${line%=*}"
+        local hostname="${line#*=}"
 
         logger::log "D" "SID=${SID}"
         logger::log "D" "hostname=${hostname}"
