@@ -89,7 +89,11 @@ function saptransport::__run_action_on_system() {
     local ssh_port="22"
     local ssh_commands=()
 
-    saptransport::__cache_transport_domain "${SID}" "${ssh_user}" "${ssh_host}" "${ssh_port}"
+    if ! saptransport::__cache_transport_domain "${SID}" "${ssh_user}" "${ssh_host}" "${ssh_port}"; then
+        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+
+        return 1
+    fi
 
     case "${action}" in
         "${SAPTRANSPORT_ACTION_CPY}" )
