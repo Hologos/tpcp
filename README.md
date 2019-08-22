@@ -27,3 +27,18 @@ ABCK123456     EFG900      ✔   ✔  ...
                MNO000      ✖   -   -   -
                XYZ100      ✔   ✔   ✔   ✔
 ```
+
+## SSH
+
+The program expects you use ssh-agent and agent forwarding is allowed. **Password login won't work.** It also expects you already have systems added to your known_hosts. Otherwise you will get 'Host key verification failed.'. To work around that, add this to your ~/.ssh/config:
+
+```
+CanonicalizeHostname yes
+CanonicalDomains <your-domain-here>
+CanonicalizeMaxDots 0
+CanonicalizeFallbackLocal yes
+
+Host *.<your-domain-here>
+    ForwardAgent yes
+    StrictHostKeyChecking no
+```
