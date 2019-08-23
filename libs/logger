@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+# VERSION=v1.0
+
 declare -A _LOGGER_LEVELS_MAP=( [A]=0 [T]=1 [D]=2 [I]=3 [N]=4 [W]=5 [E]=6 [C]=7 )
 
 function logger::__print_call_stack() {
@@ -40,7 +42,7 @@ function logger::__terminate() {
 }
 
 function logger::__is_level_set() {
-    if [[ -z ${_LOGGER_LEVEL+_} ]]; then
+    if [[ -z "${_LOGGER_LEVEL+_}" ]]; then
         logger::__terminate "Level is not set."
     fi
 }
@@ -61,21 +63,17 @@ function logger::init() {
     _LOGGER_LEVEL="${level}"
 }
 
-# function logger::set_level() {
-#     return
-# }
-
-# function logger::get_level() {
-#     return
-# }
-
 function logger::log() {
     local level="${1}"
-    # local message="${2}"
-    local message="${@:2}" # TODO: FIX array
+    local message="${@:2}"
 
     logger::__is_level_set
     logger::__validate_level "${level}"
+
+    # level A is allowed only for
+    if [[ "${level}" == "A" ]]; then
+        logger::__terminate "Message's level cannot be set to A."
+    fi
 
     if [[ ${_LOGGER_LEVELS_MAP[${level}]} -lt ${_LOGGER_LEVELS_MAP[${_LOGGER_LEVEL}]} ]]; then
         return
