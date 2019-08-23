@@ -31,6 +31,13 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 # -- initial setup ------------------------------------------------------------
 logger::init "N"
 
+# kill all background processes
+logger::log "D" "Setting up cleanup handler on EXIT."
+trap tpcp::utils::exit_trap EXIT
+
+logger::log "D" "Setting up cleanup handler on INTERRUPT and TERMINATE."
+trap tpcp::utils::trap_cleanup INT TERM
+
 # -- handle input parameters --------------------------------------------------
 
 IP_TRANSPORT_LIST=()
