@@ -103,4 +103,4 @@ wait
 
 # -- cleanup ------------------------------------------------------------------
 
-rm -rf "${TPCP_WORK_DIRPATH}"
+tpcp::utils::cleanup
