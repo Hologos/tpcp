@@ -29,7 +29,11 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
-logger::init "N"
+if ! [[ ${TPCP_LOGGER_LEVEL+_} ]]; then
+    TPCP_LOGGER_LEVEL="N"
+fi
+
+logger::init "${TPCP_LOGGER_LEVEL}"
 
 # kill all background processes
 logger::log "D" "Setting up cleanup handler on EXIT."
