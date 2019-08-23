@@ -51,3 +51,19 @@ function tpcp::utils::contains_duplicates() {
 
     return 1
 }
+
+function tpcp::utils::trap_cleanup() {
+    logger::log "C" "The program is being killed! Killing all background processes."
+
+    tpcp::utils::exit_trap
+}
+
+function tpcp::utils::exit_trap() {
+    pkill -P ${$}
+}
+
+function tpcp::utils::cleanup() {
+    logger::log "I" "Cleaning up temporary files."
+
+    rm -rf "${TPCP_WORK_DIRPATH}"
+}

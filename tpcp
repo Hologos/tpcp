@@ -29,7 +29,18 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
-logger::init "N"
+if ! [[ ${TPCP_LOGGER_LEVEL+_} ]]; then
+    TPCP_LOGGER_LEVEL="N"
+fi
+
+logger::init "${TPCP_LOGGER_LEVEL}"
+
+# kill all background processes
+logger::log "D" "Setting up cleanup handler on EXIT."
+trap tpcp::utils::exit_trap EXIT
+
+logger::log "D" "Setting up cleanup handler on INTERRUPT and TERMINATE."
+trap tpcp::utils::trap_cleanup INT TERM
 
 # -- handle input parameters --------------------------------------------------
 
@@ -96,4 +107,4 @@ wait
 
 # -- cleanup ------------------------------------------------------------------
 
-rm -rf "${TPCP_WORK_DIRPATH}"
+tpcp::utils::cleanup
