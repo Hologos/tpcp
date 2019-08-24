@@ -29,11 +29,13 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
+TPCP_LOG_FILEPATH="tpcp.$(date +'%Y%m%d-%H%M%S').log"
+
 if [[ -z ${TPCP_LOGGER_LEVEL+_} ]]; then
     TPCP_LOGGER_LEVEL="N"
 fi
 
-logger::init "${TPCP_LOGGER_LEVEL}" "tpcp.$(date +'%Y%m%d-%H%M%S').log"
+logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_FILEPATH}"
 
 logger::log "N" "Program invoked as ${0} ${@}"
 
