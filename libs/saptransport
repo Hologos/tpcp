@@ -151,7 +151,7 @@ function saptransport::__run_action_on_system() {
             "${ssh_command}" || rc=1
 
         if [[ ${rc} -ne 0 ]]; then
-            logger::log "W" "There was an error while running action ${action} for transport ${transport} on system ${system}."
+            logger::log "E" "There was an error while running action ${action} for transport ${transport} on system ${system}."
 
             saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
 
