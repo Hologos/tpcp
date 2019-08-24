@@ -99,6 +99,8 @@ Host *.<your-domain-here>
 
 Debugging is done with [logger library](https://github.com/Hologos/logger). To see debug messages, set `TPCP_LOGGER_LEVEL` variable to debug value `"D"`.
 
+In debug mode, to make it easier, the log file is always called `tpcp.debug.log`.
+
 ```bash
 $ TPCP_LOGGER_LEVEL="D" tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
 ```
