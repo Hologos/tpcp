@@ -8,10 +8,14 @@ export TPCP_CONFIG_FILEPATH="${HOME}/.config/tpcp/system-definition.ini"
 
 tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
 
+Loading system informations from /home/hologos/.config/tpcp/system-definition.ini.
+
                           CPY ADD IMP DEL
 ABCK123456     EFG900      ✔   ✔  ...
                MNO000      ✖   -   -   -
                XYZ100      ✔   ✔   ✔   ✔
+
+Log is located at tpcp.20190824-173209.log.
 ```
 
 ## What does it do
