@@ -95,7 +95,7 @@ Host *.<your-domain-here>
     StrictHostKeyChecking no
 ```
 
-### Debugging
+## Debugging
 
 Debugging is done with [logger library](https://github.com/Hologos/logger). To see debug messages, set `TPCP_LOGGER_LEVEL` variable to debug value `"D"`.
 
