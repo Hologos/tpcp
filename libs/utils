@@ -61,7 +61,7 @@ function tpcp::utils::contains_duplicates() {
     return 1
 }
 
-function tpcp::utils::cleanup_trap() {
+function tpcp::utils::interrupt_trap() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   [no-params]"
 
