@@ -79,7 +79,7 @@ saptransport::load_ini_file "${TPCP_CONFIG_FILEPATH}"
 TPCP_WORK_DIRPATH="/tmp/tpcp.${RANDOM}.${$}"
 
 if [[ ! -d "${TPCP_WORK_DIRPATH}" ]]; then
-    mkdir "${TPCP_WORK_DIRPATH}" # || terminate
+    mkdir "${TPCP_WORK_DIRPATH}" || tpcp::utils::terminate "Cannot create work directory ${TPCP_WORK_DIRPATH}."
 fi
 
 # record initial status
