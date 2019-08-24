@@ -6,21 +6,25 @@ function tpcp::utils::usage() {
 
     >&2 echo
     >&2 echo "Usage: $0 <transport-list> <system-list> <action-list>"
-    >&2 echo ""
+    >&2 echo
     >&2 echo "    <transport-list>"
     >&2 echo "        List of transport names (eg: ABCK000001)."
-    >&2 echo ""
+    >&2 echo
     >&2 echo "    <system-list>"
     >&2 echo "        List of system names in form of [SID][CLIENT] (eg: ABC000)."
-    >&2 echo ""
+    >&2 echo
     >&2 echo "    <action-list>"
     >&2 echo "        List of actions."
-    >&2 echo ""
+    >&2 echo
     >&2 echo "        Possible values:"
     >&2 echo "            ${SAPTRANSPORT_ACTION_CPY} - copy transport from source system to destination system"
     >&2 echo "            ${SAPTRANSPORT_ACTION_ADD} - add transport into import queue"
     >&2 echo "            ${SAPTRANSPORT_ACTION_IMP} - import transport into system"
     >&2 echo "            ${SAPTRANSPORT_ACTION_DEL} - delete transport from import queue"
+    >&2 echo
+    >&2 echo "    Environment variables"
+    >&2 echo "        TPCP_SYSTEM_FILEPATH - filepath to system definition ini file"
+    >&2 echo "        TPCP_LOGGER_LEVEL - level for logger library (default is N)"
 }
 
 function tpcp::utils::terminate() {
@@ -32,6 +36,11 @@ function tpcp::utils::terminate() {
         local message="${1}"
 
         logger::log "T" "   message=${message}"
+
+        # also print to STDERR
+        >&2 echo
+        >&2 echo "The program has been terminated due to a critical error:"
+        >&2 echo "${message}"
 
         logger::log "C" "${message}"
     fi
@@ -52,17 +61,28 @@ function tpcp::utils::contains_duplicates() {
     return 1
 }
 
-function tpcp::utils::trap_cleanup() {
+function tpcp::utils::cleanup_trap() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
     logger::log "C" "The program is being killed! Killing all background processes."
 
     tpcp::utils::exit_trap
 }
 
 function tpcp::utils::exit_trap() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
+    tpcp::render::print_log_location
+
     pkill -P ${$}
 }
 
 function tpcp::utils::cleanup() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
     logger::log "I" "Cleaning up temporary files."
 
     rm -rf "${TPCP_WORK_DIRPATH}"

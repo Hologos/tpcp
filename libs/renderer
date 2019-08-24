@@ -133,3 +133,11 @@ function tpcp::renderer::__clear_previous_output() {
 
     ansi::previousLine "${number_of_lines}"
 }
+
+function tpcp::render::print_log_location() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
+    echo
+    echo "Log is located at ${TPCP_LOG_FILEPATH}."
+}

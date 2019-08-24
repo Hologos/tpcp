@@ -29,18 +29,26 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
-if ! [[ ${TPCP_LOGGER_LEVEL+_} ]]; then
+TPCP_LOG_FILEPATH="tpcp.$(date +'%Y%m%d-%H%M%S').log"
+
+if [[ -z "${TPCP_LOGGER_LEVEL+_}" ]]; then
     TPCP_LOGGER_LEVEL="N"
 fi
 
-logger::init "${TPCP_LOGGER_LEVEL}"
+if [[ "${TPCP_LOGGER_LEVEL}" == "D" ]]; then
+    TPCP_LOG_FILEPATH="tpcp.debug.log"
+fi
+
+logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_FILEPATH}"
+
+logger::log "N" "Program invoked as ${0} ${@}"
 
 # kill all background processes
 logger::log "D" "Setting up cleanup handler on EXIT."
 trap tpcp::utils::exit_trap EXIT
 
 logger::log "D" "Setting up cleanup handler on INTERRUPT and TERMINATE."
-trap tpcp::utils::trap_cleanup INT TERM
+trap tpcp::utils::cleanup_trap INT TERM
 
 # -- handle input parameters --------------------------------------------------
 
@@ -59,7 +67,7 @@ tpcp::inputparser::parse_action_list "${3}"
 
 # -- main program -------------------------------------------------------------
 
-if ! [[ ${TPCP_CONFIG_FILEPATH+_} ]]; then
+if [[ -z "${TPCP_CONFIG_FILEPATH+_}" ]]; then
     tpcp::utils::terminate "Environment variable TPCP_CONFIG_FILEPATH is not set."
 fi
 
