@@ -77,8 +77,6 @@ function tpcp::ssh::__create_master_connection() {
         -p "${port}"                                    \
                                                         \
         "${user}"@"${host}" &> /dev/null
-
-    return
 }
 
 function tpcp::ssh::run_command() {

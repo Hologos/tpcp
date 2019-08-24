@@ -340,7 +340,7 @@ function saptransport::__cache_transport_domain() {
     if saptransport::__is_transport_domain_cached "${SID}"; then
         logger::log "D" "Transport domain for ${SID} found in cache."
 
-        return
+        return 0
     fi
 
     logger::log "D" "Caching transport domain for ${SID}."
