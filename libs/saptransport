@@ -382,7 +382,7 @@ function saptransport::load_ini_file() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   filepath=${filepath}"
 
-    logger::log "D" "Loading file ${filepath}."
+    logger::log "N" "Loading ini file ${filepath}."
 
     if [[ ! -r "${filepath}" ]]; then
         tpcp::utils::terminate "Cannot read ini file ${filepath}."
