@@ -77,7 +77,7 @@ function saptransport::__run_action_on_system() {
 
     logger::log "D" "Running action ${action} for transport ${transport} on system ${system}."
 
-    saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+    saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${transport}" "${system}" "${action}"
 
     local SID="$(saptransport::__get_SID "${system}")"
     local client="$(saptransport::__get_client "${system}")"
@@ -88,7 +88,7 @@ function saptransport::__run_action_on_system() {
     if ! saptransport::__hostname_exists "${SID}"; then
         logger::log "C" "Hostname for SID ${SID} not found."
 
-        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
 
         return 1
     fi
@@ -99,7 +99,7 @@ function saptransport::__run_action_on_system() {
     local ssh_commands=()
 
     if ! saptransport::__cache_transport_domain "${SID}" "${ssh_user}" "${ssh_host}" "${ssh_port}"; then
-        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
 
         return 1
     fi
@@ -112,7 +112,7 @@ function saptransport::__run_action_on_system() {
             if ! saptransport::__hostname_exists "${SID_source}"; then
                 logger::log "C" "Hostname for SID ${SID_source} not found."
 
-                saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+                saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
 
                 return 1
             fi
@@ -160,25 +160,23 @@ function saptransport::__run_action_on_system() {
         if [[ ${rc} -ne 0 ]]; then
             logger::log "E" "There was an error while running action ${action} for transport ${transport} on system ${system}."
 
-            saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+            saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
 
             return 1
         fi
     done
 
-    saptransport::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+    saptransport::record_status "${SAPTRANSPORT_STATUS_FINISHED}" "${transport}" "${system}" "${action}"
 }
 
 function saptransport::record_status() {
     local status="${1}"
-    local work_dirpath="${2}"
-    local transport="${3}"
-    local system="${4}"
-    local action="${5}"
+    local transport="${2}"
+    local system="${3}"
+    local action="${4}"
 
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   status=${status}"
-    logger::log "T" "   work_dirpath=${work_dirpath}"
     logger::log "T" "   transport=${transport}"
     logger::log "T" "   system=${system}"
     logger::log "T" "   action=${action}"
@@ -201,7 +199,7 @@ function saptransport::record_status() {
             fi
 
             if [[ ${action_found} -eq 1 ]]; then
-                saptransport::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${work_dirpath}" "${transport}" "${system}" "${subsequent_action}"
+                saptransport::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${transport}" "${system}" "${subsequent_action}"
             fi
         done
     elif [[ "${status}" == "${SAPTRANSPORT_STATUS_FINISHED}" ]]; then
@@ -217,7 +215,7 @@ function saptransport::record_status() {
             fi
 
             if [[ ${action_found} -eq 1 ]]; then
-                saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${work_dirpath}" "${transport}" "${system}" "${subsequent_action}"
+                saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${transport}" "${system}" "${subsequent_action}"
                 break
             fi
         done
@@ -234,7 +232,7 @@ function saptransport::record_status() {
     logger::log "D" "Changing status to ${status} for ${transport}->${system}->${action}."
 
     # FIX: set status of current action as last thing to fix the race condition in saptransport::is_all_done()
-    echo "${status}" > "${work_dirpath}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+    echo "${status}" > "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
 }
 
 function saptransport::is_all_done() {
