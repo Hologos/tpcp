@@ -35,6 +35,10 @@ if [[ -z "${TPCP_LOGGER_LEVEL+_}" ]]; then
     TPCP_LOGGER_LEVEL="N"
 fi
 
+if [[ "${TPCP_LOGGER_LEVEL}" == "D" ]]; then
+    TPCP_LOG_FILEPATH="tpcp.debug.log"
+fi
+
 logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_FILEPATH}"
 
 logger::log "N" "Program invoked as ${0} ${@}"
