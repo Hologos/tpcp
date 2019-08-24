@@ -56,7 +56,7 @@ function saptransport::__run_actions_on_system() {
         saptransport::__run_action_on_system "${transport}" "${system}" "${action}"
     done
 
-    logger::log "N" "All actions for transport ${transport} on system ${system} were successfully completed."
+    logger::log "I" "All actions for transport ${transport} on system ${system} were successfully completed."
 }
 
 function saptransport::__run_action_on_system() {
@@ -382,7 +382,7 @@ function saptransport::load_ini_file() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   filepath=${filepath}"
 
-    logger::log "N" "Loading ini file ${filepath}."
+    logger::log "I" "Loading ini file ${filepath}."
 
     if [[ ! -r "${filepath}" ]]; then
         tpcp::utils::terminate "Cannot read ini file ${filepath}."
