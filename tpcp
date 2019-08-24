@@ -33,7 +33,9 @@ if [[ -z ${TPCP_LOGGER_LEVEL+_} ]]; then
     TPCP_LOGGER_LEVEL="N"
 fi
 
-logger::init "${TPCP_LOGGER_LEVEL}"
+logger::init "${TPCP_LOGGER_LEVEL}" "tpcp.$(date +'%Y%m%d-%H%M%S').log"
+
+logger::log "N" "Program invoked as ${0} ${@}"
 
 # kill all background processes
 logger::log "D" "Setting up cleanup handler on EXIT."
