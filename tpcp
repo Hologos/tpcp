@@ -44,11 +44,11 @@ logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_FILEPATH}"
 logger::log "N" "Program invoked as ${0} ${@}"
 
 # kill all background processes
-logger::log "D" "Setting up cleanup handler on EXIT."
+logger::log "D" "Setting up trap on EXIT."
 trap tpcp::utils::exit_trap EXIT
 
-logger::log "D" "Setting up cleanup handler on INTERRUPT and TERMINATE."
-trap tpcp::utils::cleanup_trap INT TERM
+logger::log "D" "Setting up trap on INTERRUPT and TERMINATE."
+trap tpcp::utils::interrupt_trap INT TERM
 
 # -- handle input parameters --------------------------------------------------
 
@@ -79,14 +79,14 @@ saptransport::load_ini_file "${TPCP_CONFIG_FILEPATH}"
 TPCP_WORK_DIRPATH="/tmp/tpcp.${RANDOM}.${$}"
 
 if [[ ! -d "${TPCP_WORK_DIRPATH}" ]]; then
-    mkdir "${TPCP_WORK_DIRPATH}" # || terminate
+    mkdir "${TPCP_WORK_DIRPATH}" || tpcp::utils::terminate "Cannot create work directory ${TPCP_WORK_DIRPATH}."
 fi
 
 # record initial status
 for transport in "${IP_TRANSPORT_LIST[@]}"; do
     for system in "${IP_SYSTEM_LIST[@]}"; do
         for action in "${IP_ACTION_LIST[@]}"; do
-            saptransport::record_status "${SAPTRANSPORT_STATUS_INITIAL}" "${TPCP_WORK_DIRPATH}" "${transport}" "${system}" "${action}"
+            saptransport::record_status "${SAPTRANSPORT_STATUS_INITIAL}" "${transport}" "${system}" "${action}"
         done
     done
 done
