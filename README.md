@@ -57,6 +57,17 @@ tpcp <transport-list> <system-list> <action-list>
         TPCP_LOGGER_LEVEL - level for logger library (default is I)
 ```
 
+### Log file
+
+For each run of the program there is a log file. It is called `tpcp.<datetime>.log` and is located in current directory.
+
+```
+[24.08.2019 17:32:09] I: Program invoked as tpcp ABCK123456 EFG900 MNO000 XYZ100 CPY ADD IMP DEL
+[24.08.2019 17:32:09] I: Loading ini file /home/hologos/.config/tpcp/system-definition.ini.
+[24.08.2019 17:32:09] E: There was an error while running action CPY for transport ABCK123456 on system MNO000.
+[24.08.2019 17:32:09] I: All actions for transport ABCK123456 on system XYZ100 were successfully completed.
+```
+
 ### System definition ini file
 
 Since a hostname cannot be derived from a transport name nor from a system name, there has to be some mapping. That is what system definition ini file is for.
