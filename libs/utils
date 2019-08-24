@@ -37,6 +37,11 @@ function tpcp::utils::terminate() {
 
         logger::log "T" "   message=${message}"
 
+        # also print to STDERR
+        >&2 echo
+        >&2 echo "The program has been terminated due to a critical error:"
+        >&2 echo "${message}"
+
         logger::log "C" "${message}"
     fi
 
