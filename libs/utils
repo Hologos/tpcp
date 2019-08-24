@@ -67,7 +67,8 @@ function tpcp::utils::interrupt_trap() {
 
     logger::log "C" "The program is being killed! Killing all background processes."
 
-    tpcp::utils::exit_trap
+    # create signal file to stop futher processing
+    touch "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_ABORT_FILENAME}"
 }
 
 function tpcp::utils::exit_trap() {
@@ -75,8 +76,6 @@ function tpcp::utils::exit_trap() {
     logger::log "T" "   [no-params]"
 
     tpcp::render::print_log_location
-
-    pkill -P ${$}
 }
 
 function tpcp::utils::cleanup() {

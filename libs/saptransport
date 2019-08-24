@@ -15,6 +15,7 @@ SAPTRANSPORT_STATUS_FINISHED="FINISHED"
 SAPTRANSPORT_STATUS_SKIPPED="SKIPPED"
 
 SAPTRANSPORT_STATUS_FILENAME_PART="saptransport_status"
+SAPTRANSPORT_ABORT_FILENAME="saptransport_abort"
 
 function saptransport::process_transport() {
     local transport="${1}"
@@ -67,6 +68,12 @@ function saptransport::__run_action_on_system() {
     logger::log "T" "   transport=${transport}"
     logger::log "T" "   system=${system}"
     logger::log "T" "   action=${action}"
+
+    if [[ -e "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_ABORT_FILENAME}" ]]; then
+        logger::log "W" "Skipping all actions for transport ${transport} on system ${system}."
+
+        exit 1
+    fi
 
     logger::log "D" "Running action ${action} for transport ${transport} on system ${system}."
 
