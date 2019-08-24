@@ -32,7 +32,7 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 TPCP_LOG_FILEPATH="tpcp.$(date +'%Y%m%d-%H%M%S').log"
 
 if [[ -z "${TPCP_LOGGER_LEVEL+_}" ]]; then
-    TPCP_LOGGER_LEVEL="N"
+    TPCP_LOGGER_LEVEL="I"
 fi
 
 if [[ "${TPCP_LOGGER_LEVEL}" == "D" ]]; then
@@ -41,7 +41,7 @@ fi
 
 logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_FILEPATH}"
 
-logger::log "N" "Program invoked as ${0} ${@}"
+logger::log "I" "Program invoked as ${0} ${@}"
 
 # kill all background processes
 logger::log "D" "Setting up trap on EXIT."

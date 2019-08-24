@@ -4,9 +4,9 @@ A tool to remotely work with SAP import queue and transports.
 
 ```bash
 # ideally save it to your .bash_profile, .zlogin (etc)
-export TPCP_CONFIG_FILEPATH="${HOME}/.config/tpcp/system-definition.ini"
+$ export TPCP_CONFIG_FILEPATH="${HOME}/.config/tpcp/system-definition.ini"
 
-tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
+$ tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
 
 Loading system informations from /home/hologos/.config/tpcp/system-definition.ini.
 
@@ -54,7 +54,18 @@ tpcp <transport-list> <system-list> <action-list>
 
     Environment variables
         TPCP_SYSTEM_FILEPATH - filepath to system definition ini file
-        TPCP_LOGGER_LEVEL - level for logger library (default is N)
+        TPCP_LOGGER_LEVEL - level for logger library (default is I)
+```
+
+### Log file
+
+For each run of the program there is a log file. It is called `tpcp.<datetime>.log` and is located in current directory.
+
+```
+[24.08.2019 17:32:09] I: Program invoked as tpcp ABCK123456 EFG900 MNO000 XYZ100 CPY ADD IMP DEL
+[24.08.2019 17:32:09] I: Loading ini file /home/hologos/.config/tpcp/system-definition.ini.
+[24.08.2019 17:32:09] E: There was an error while running action CPY for transport ABCK123456 on system MNO000.
+[24.08.2019 17:32:09] I: All actions for transport ABCK123456 on system XYZ100 were successfully completed.
 ```
 
 ### System definition ini file
@@ -71,7 +82,7 @@ XYZ=svgb0hefe823.your-company.corp
 
 ### Host key verification
 
-The program expects you to use ssh-agent and that agent forwarding is allowed. **Password login won't work.** It also expects you to have systems already added to your known_hosts, otherwise you will get 'Host key verification failed.'. To work around that, add this to your ~/.ssh/config:
+The program expects you to use ssh-agent and that agent forwarding is allowed. **Password login won't work.** It also expects you to have systems already added to your `known_hosts`, otherwise you will get 'Host key verification failed.'. To work around that, add this to your `~/.ssh/config`:
 
 ```
 CanonicalizeHostname yes
@@ -84,10 +95,12 @@ Host *.<your-domain-here>
     StrictHostKeyChecking no
 ```
 
-### Debugging
+## Debugging
 
 Debugging is done with [logger library](https://github.com/Hologos/logger). To see debug messages, set `TPCP_LOGGER_LEVEL` variable to debug value `"D"`.
 
+In debug mode, to make it easier, the log file is always called `tpcp.debug.log`.
+
 ```bash
-TPCP_LOGGER_LEVEL="D" tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
+$ TPCP_LOGGER_LEVEL="D" tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
 ```
