@@ -32,7 +32,7 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 TPCP_LOG_FILEPATH="tpcp.$(date +'%Y%m%d-%H%M%S').log"
 
 if [[ -z "${TPCP_LOGGER_LEVEL+_}" ]]; then
-    TPCP_LOGGER_LEVEL="N"
+    TPCP_LOGGER_LEVEL="I"
 fi
 
 if [[ "${TPCP_LOGGER_LEVEL}" == "D" ]]; then

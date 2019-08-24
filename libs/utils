@@ -24,7 +24,7 @@ function tpcp::utils::usage() {
     >&2 echo
     >&2 echo "    Environment variables"
     >&2 echo "        TPCP_SYSTEM_FILEPATH - filepath to system definition ini file"
-    >&2 echo "        TPCP_LOGGER_LEVEL - level for logger library (default is N)"
+    >&2 echo "        TPCP_LOGGER_LEVEL - level for logger library (default is I)"
 }
 
 function tpcp::utils::terminate() {

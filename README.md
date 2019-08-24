@@ -54,7 +54,7 @@ tpcp <transport-list> <system-list> <action-list>
 
     Environment variables
         TPCP_SYSTEM_FILEPATH - filepath to system definition ini file
-        TPCP_LOGGER_LEVEL - level for logger library (default is N)
+        TPCP_LOGGER_LEVEL - level for logger library (default is I)
 ```
 
 ### System definition ini file
