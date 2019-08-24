@@ -347,7 +347,7 @@ function saptransport::__cache_transport_domain() {
         "${ssh_host}"       \
         "${ssh_port}"       \
                             \
-        "${ssh_command}" > "${TPCP_WORK_DIRPATH}/saptransport_domain_controller_${SID}" || rc=1
+        "${ssh_command}" > "${TPCP_WORK_DIRPATH}/saptransport_domain_controller_${SID}" 2> /dev/null || rc=1
 
     if [[ ${rc} -ne 0 ]]; then
         logger::log "C" "Cannot get domain controller for ${SID} from ${ssh_user}@${ssh_host}:${ssh_port}."
