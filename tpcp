@@ -42,7 +42,7 @@ logger::log "D" "Setting up cleanup handler on EXIT."
 trap tpcp::utils::exit_trap EXIT
 
 logger::log "D" "Setting up cleanup handler on INTERRUPT and TERMINATE."
-trap tpcp::utils::trap_cleanup INT TERM
+trap tpcp::utils::cleanup_trap INT TERM
 
 # -- handle input parameters --------------------------------------------------
 
