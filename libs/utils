@@ -69,6 +69,8 @@ function tpcp::utils::exit_trap() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   [no-params]"
 
+    tpcp::render::print_log_location
+
     pkill -P ${$}
 }
 
