@@ -54,6 +54,8 @@ function saptransport::__run_actions_on_system() {
     for action in "${action_list[@]}"; do
         saptransport::__run_action_on_system "${transport}" "${system}" "${action}"
     done
+
+    logger::log "N" "All actions for transport ${transport} on system ${system} were successfully completed."
 }
 
 function saptransport::__run_action_on_system() {
