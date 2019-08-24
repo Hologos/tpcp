@@ -71,7 +71,7 @@ XYZ=svgb0hefe823.your-company.corp
 
 ### Host key verification
 
-The program expects you to use ssh-agent and that agent forwarding is allowed. **Password login won't work.** It also expects you to have systems already added to your known_hosts, otherwise you will get 'Host key verification failed.'. To work around that, add this to your ~/.ssh/config:
+The program expects you to use ssh-agent and that agent forwarding is allowed. **Password login won't work.** It also expects you to have systems already added to your `known_hosts`, otherwise you will get 'Host key verification failed.'. To work around that, add this to your `~/.ssh/config`:
 
 ```
 CanonicalizeHostname yes
