@@ -4,9 +4,9 @@ A tool to remotely work with SAP import queue and transports.
 
 ```bash
 # ideally save it to your .bash_profile, .zlogin (etc)
-export TPCP_CONFIG_FILEPATH="${HOME}/.config/tpcp/system-definition.ini"
+$ export TPCP_CONFIG_FILEPATH="${HOME}/.config/tpcp/system-definition.ini"
 
-tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
+$ tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
 
 Loading system informations from /home/hologos/.config/tpcp/system-definition.ini.
 
@@ -89,5 +89,5 @@ Host *.<your-domain-here>
 Debugging is done with [logger library](https://github.com/Hologos/logger). To see debug messages, set `TPCP_LOGGER_LEVEL` variable to debug value `"D"`.
 
 ```bash
-TPCP_LOGGER_LEVEL="D" tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
+$ TPCP_LOGGER_LEVEL="D" tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
 ```
