@@ -16,6 +16,7 @@ SAPTRANSPORT_STATUS_SKIPPED="SKIPPED"
 
 SAPTRANSPORT_STATUS_FILENAME_PART="saptransport_status"
 SAPTRANSPORT_ABORT_FILENAME="saptransport_abort"
+SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART="saptransport_domain_controller"
 
 function saptransport::process_transport() {
     local transport="${1}"
@@ -354,7 +355,7 @@ function saptransport::__cache_transport_domain() {
         "${ssh_host}"       \
         "${ssh_port}"       \
                             \
-        "${ssh_command}" > "${TPCP_WORK_DIRPATH}/saptransport_domain_controller_${SID}" 2> /dev/null || rc=1
+        "${ssh_command}" > "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${SID}" 2> /dev/null || rc=1
 
     if [[ ${rc} -ne 0 ]]; then
         logger::log "C" "Cannot get domain controller for ${SID} from ${ssh_user}@${ssh_host}:${ssh_port}."
@@ -362,8 +363,8 @@ function saptransport::__cache_transport_domain() {
         return 1
     fi
 
-    SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]="$( < "${TPCP_WORK_DIRPATH}/saptransport_domain_controller_${SID}" )" \
-        || tpcp::utils::terminate "Cannot load domain controller from file '${TPCP_WORK_DIRPATH}/saptransport_domain_controller_${SID}'."
+    SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${SID}" )" \
+        || tpcp::utils::terminate "Cannot load domain controller from file '${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${SID}'."
 }
 
 function saptransport::__hostname_exists() {
