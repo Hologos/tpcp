@@ -35,7 +35,7 @@ if [[ -z "${TPCP_LOGGER_LEVEL+_}" ]]; then
     TPCP_LOGGER_LEVEL="I"
 fi
 
-if [[ "${TPCP_LOGGER_LEVEL}" == "D" ]]; then
+if logger::level_is_lower "${TPCP_LOGGER_LEVEL}" "D" || logger::level_is_equal "${TPCP_LOGGER_LEVEL}" "D"; then
     TPCP_LOG_FILEPATH="tpcp.debug.log"
 fi
 
