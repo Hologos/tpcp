@@ -6,6 +6,10 @@ function tpcp::inputparser::parse_transport_list() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   transport_list=${transport_list}"
 
+    if ! [[ "${transport_list}" =~ [A-Z0-9] ]]; then
+        tpcp::utils::terminate "Transport list cannot be empty."
+    fi
+
     if tpcp::utils::contains_duplicates "${transport_list}"; then
         tpcp::utils::terminate "Transport list cannot have duplicates."
     fi
@@ -29,6 +33,10 @@ function tpcp::inputparser::parse_system_list() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   system_list=${system_list}"
 
+    if ! [[ "${system_list}" =~ [A-Z0-9] ]]; then
+        tpcp::utils::terminate "System list cannot be empty."
+    fi
+
     if tpcp::utils::contains_duplicates "${system_list}"; then
         tpcp::utils::terminate "System list cannot have duplicates."
     fi
@@ -51,6 +59,10 @@ function tpcp::inputparser::parse_action_list() {
 
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   action_list=${action_list}"
+
+    if ! [[ "${action_list}" =~ [A-Z0-9] ]]; then
+        tpcp::utils::terminate "Action list cannot be empty."
+    fi
 
     if tpcp::utils::contains_duplicates "${action_list}"; then
         tpcp::utils::terminate "Action list cannot have duplicates."
