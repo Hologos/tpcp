@@ -242,7 +242,7 @@ function saptransport::is_all_done() {
     local status_filepath
 
     for status_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}."*; do
-        local status="$( < "${status_filepath}" )"
+        local status="$( < "${status_filepath}" )" || tpcp::utils::terminate "Cannot load status from file '${status_filepath}'."
 
         case "${status}" in
             # FIX: There was a race condition due to changing status is not an atomic operation.
@@ -362,7 +362,8 @@ function saptransport::__cache_transport_domain() {
         return 1
     fi
 
-    SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]="$( < "${TPCP_WORK_DIRPATH}/saptransport_domain_controller_${SID}" )"
+    SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]="$( < "${TPCP_WORK_DIRPATH}/saptransport_domain_controller_${SID}" )" \
+        || tpcp::utils::terminate "Cannot load domain controller from file '${TPCP_WORK_DIRPATH}/saptransport_domain_controller_${SID}'."
 }
 
 function saptransport::__hostname_exists() {
