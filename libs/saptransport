@@ -25,8 +25,8 @@ function saptransport::process_transport() {
 
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   transport=${transport}"
-    logger::log "T" "   system_list=${system_list[@]}" # TODO: FIX array
-    logger::log "T" "   action_list=${action_list[@]}" # TODO: FIX array
+    logger::log "T" "   system_list=${system_list[*]}"
+    logger::log "T" "   action_list=${action_list[*]}"
 
     logger::log "D" "Processing transport ${transport}."
 
@@ -47,7 +47,7 @@ function saptransport::__run_actions_on_system() {
     logger::log "T" "Running ${FUNCNAME}():"
     logger::log "T" "   transport=${transport}"
     logger::log "T" "   system=${system}"
-    logger::log "T" "   action_list=${action_list[@]}" # TODO: FIX array
+    logger::log "T" "   action_list=${action_list[*]}"
 
     logger::log "D" "Running actions for transport ${transport} on system ${system}."
 

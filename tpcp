@@ -41,7 +41,7 @@ fi
 
 logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_FILEPATH}"
 
-logger::log "I" "Program invoked as ${0} ${@}"
+logger::log "I" "Program invoked as ${0} ${*}"
 
 # kill all background processes
 logger::log "D" "Setting up trap on EXIT."
