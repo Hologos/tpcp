@@ -126,8 +126,8 @@ function saptransport::__run_action_on_system() {
             local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${SID_source}]}"
             local ssh_port="22"
 
-            ssh_commands+=("scp -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/cofiles/K${transport_label}.${SID_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/cofiles/")
-            ssh_commands+=("scp -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/data/R${transport_label}.${SID_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/data/")
+            ssh_commands+=("scp -p -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/cofiles/K${transport_label}.${SID_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/cofiles/")
+            ssh_commands+=("scp -p -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/data/R${transport_label}.${SID_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/data/")
         ;;
 
         "${SAPTRANSPORT_ACTION_ADD}" )
