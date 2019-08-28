@@ -23,7 +23,7 @@ function tpcp::ssh::__close_master_connection() {
                                                         \
         -O stop                                         \
                                                         \
-        "${user}"@"${host}" &> /dev/null
+        "${user}"@"${host}"
 }
 
 function tpcp::ssh::__is_master_connection_alive() {
@@ -44,7 +44,7 @@ function tpcp::ssh::__is_master_connection_alive() {
                                                         \
         -O check                                        \
                                                         \
-        "${user}"@"${host}" &> /dev/null
+        "${user}"@"${host}"
 }
 
 function tpcp::ssh::__create_master_connection() {
@@ -76,7 +76,7 @@ function tpcp::ssh::__create_master_connection() {
         -S "${SSH_MASTER_CONTROL_SOCKET_FILEPATH}"      \
         -p "${port}"                                    \
                                                         \
-        "${user}"@"${host}" &> /dev/null
+        "${user}"@"${host}"
 }
 
 function tpcp::ssh::run_command() {
@@ -118,28 +118,4 @@ function tpcp::ssh::run_command() {
     fi
 
     return ${result}
-}
-
-function tpcp::ssh::run_command_to_stderr() {
-    local user="${1}"
-    local host="${2}"
-    local port="${3}"
-    local command="${4}"
-
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   user=${user}"
-    logger::log "T" "   host=${host}"
-    logger::log "T" "   port=${port}"
-    logger::log "T" "   command=${command}"
-
-    local rc=0
-
-    tpcp::ssh::run_command          \
-        "${user}"                   \
-        "${host}"                   \
-        "${port}"                   \
-                                    \
-        "${command}" 1>&2 || rc=1
-
-    return ${rc}
 }

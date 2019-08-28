@@ -86,3 +86,25 @@ function tpcp::utils::cleanup() {
 
     rm -rf "${TPCP_WORK_DIRPATH}"
 }
+
+function tpcp::utils::capture_stdout() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
+    local msg=""
+
+    while read msg; do
+        logger::log "I" "${msg}"
+    done
+}
+
+function tpcp::utils::capture_stderr() {
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
+
+    local msg=""
+
+    while read msg; do
+        logger::log "W" "${msg}"
+    done
+}

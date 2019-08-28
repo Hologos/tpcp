@@ -151,12 +151,15 @@ function saptransport::__run_action_on_system() {
     for ssh_command in "${ssh_commands[@]}"; do
         local rc=0
 
-        tpcp::ssh::run_command_to_stderr    \
-            "${ssh_user}"                   \
-            "${ssh_host}"                   \
-            "${ssh_port}"                   \
-                                            \
-            "${ssh_command}" || rc=1
+        tpcp::ssh::run_command                      \
+            "${ssh_user}"                           \
+            "${ssh_host}"                           \
+            "${ssh_port}"                           \
+                                                    \
+            "${ssh_command}"                        \
+                1> >(tpcp::utils::capture_stdout)   \
+                2> >(tpcp::utils::capture_stderr)   \
+                || rc=1
 
         if [[ ${rc} -ne 0 ]]; then
             logger::log "E" "There was an error while running action ${action} for transport ${transport} on system ${system}."
@@ -348,14 +351,17 @@ function saptransport::__cache_transport_domain() {
 
     local rc=0
     local ssh_command="egrep -o '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
+    local cache_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${SID}"
 
-    tpcp::ssh::run_command  \
-                            \
-        "${ssh_user}"       \
-        "${ssh_host}"       \
-        "${ssh_port}"       \
-                            \
-        "${ssh_command}" > "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${SID}" 2> /dev/null || rc=1
+    tpcp::ssh::run_command                      \
+        "${ssh_user}"                           \
+        "${ssh_host}"                           \
+        "${ssh_port}"                           \
+                                                \
+        "${ssh_command}"                        \
+            1> "${cache_filepath}"              \
+            2> >(tpcp::utils::capture_stderr)   \
+            || rc=1
 
     if [[ ${rc} -ne 0 ]]; then
         logger::log "C" "Cannot get domain controller for ${SID} from ${ssh_user}@${ssh_host}:${ssh_port}."
