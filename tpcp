@@ -20,8 +20,8 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 
 # -- load libraries -----------------------------------------------------------
 
-. "${ABSOLUTE_DIRPATH}/libs/ansi"
-. "${ABSOLUTE_DIRPATH}/libs/logger"
+. "${ABSOLUTE_DIRPATH}/vendor/fidian/ansi/ansi"
+. "${ABSOLUTE_DIRPATH}/vendor/hologos/logger/logger"
 . "${ABSOLUTE_DIRPATH}/libs/inputparser"
 . "${ABSOLUTE_DIRPATH}/libs/utils"
 . "${ABSOLUTE_DIRPATH}/libs/ssh"

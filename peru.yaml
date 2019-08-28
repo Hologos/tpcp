@@ -1,0 +1,17 @@
+imports:
+    ansi: vendor/fidian/ansi/
+    logger: vendor/hologos/logger/
+
+git module ansi:
+    url: https://github.com/fidian/ansi
+    pick:
+        - ansi
+        - LICENSE.md
+    rev: 7f72f55d87665003af5443f226346f5158071ac9
+
+git module logger:
+    url: https://github.com/hologos/logger
+    pick:
+        - logger
+        - LICENSE
+    rev: 09948987d719468ef5163a21a61e2a2da2bf7937
