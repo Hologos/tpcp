@@ -18,6 +18,7 @@ function tpcp::ssh::__close_master_connection() {
     ssh                                                 \
         -o ConnectTimeout=5                             \
         -o BatchMode=yes                                \
+        -o ForwardX11=no                                \
         -S "${SSH_MASTER_CONTROL_SOCKET_FILEPATH}"      \
         -p "${port}"                                    \
                                                         \
@@ -39,6 +40,7 @@ function tpcp::ssh::__is_master_connection_alive() {
     ssh                                                 \
         -o ConnectTimeout=5                             \
         -o BatchMode=yes                                \
+        -o ForwardX11=no                                \
         -S "${SSH_MASTER_CONTROL_SOCKET_FILEPATH}"      \
         -p "${port}"                                    \
                                                         \
@@ -73,6 +75,7 @@ function tpcp::ssh::__create_master_connection() {
         -o ControlMaster=yes                            \
         -o ControlPersist=2m                            \
         -o BatchMode=yes                                \
+        -o ForwardX11=no                                \
         -S "${SSH_MASTER_CONTROL_SOCKET_FILEPATH}"      \
         -p "${port}"                                    \
                                                         \
@@ -104,6 +107,7 @@ function tpcp::ssh::run_command() {
     ssh                                                 \
         -o ConnectTimeout=5                             \
         -o BatchMode=yes                                \
+        -o ForwardX11=no                                \
         -S "${SSH_MASTER_CONTROL_SOCKET_FILEPATH}"      \
         -p "${port}"                                    \
                                                         \
