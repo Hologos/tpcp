@@ -62,18 +62,18 @@ function tpcp::utils::contains_duplicates() {
 }
 
 function tpcp::utils::interrupt_trap() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "C" "The program is being killed! Killing all background processes."
+    logger::log "C" "The program is being killed! Killing all background processes."
 
     # create signal file to stop futher processing
     touch "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_ABORT_FILENAME}"
 }
 
 function tpcp::utils::exit_trap() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
 
     tpcp::render::print_log_location
 }
