@@ -8,12 +8,12 @@ function tpcp::ssh::__close_master_connection() {
     local host="${2}"
     local port="${3}"
 
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   user=${user}"
-    logger::log "T" "   host=${host}"
-    logger::log "T" "   port=${port}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   user=${user}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   host=${host}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   port=${port}"
 
-    logger::log "D" "Closing master connection ${user}@${host}:${port}."
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Closing master connection ${user}@${host}:${port}."
 
     ssh                                                 \
         -o ConnectTimeout=5                             \
@@ -33,10 +33,10 @@ function tpcp::ssh::__is_master_connection_alive() {
     local host="${2}"
     local port="${3}"
 
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   user=${user}"
-    logger::log "T" "   host=${host}"
-    logger::log "T" "   port=${port}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   user=${user}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   host=${host}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   port=${port}"
 
     ssh                                                 \
         -o ConnectTimeout=5                             \
@@ -56,12 +56,12 @@ function tpcp::ssh::__create_master_connection() {
     local host="${2}"
     local port="${3}"
 
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   user=${user}"
-    logger::log "T" "   host=${host}"
-    logger::log "T" "   port=${port}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   user=${user}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   host=${host}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   port=${port}"
 
-    logger::log "D" "Creating master connection ${user}@${host}:${port}."
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Creating master connection ${user}@${host}:${port}."
 
     # Explanation:
     #   -M                   - places the ssh client into ``master'' mode for connection sharing
@@ -91,18 +91,18 @@ function tpcp::ssh::run_command() {
     local port="${3}"
     local command="${4}"
 
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   user=${user}"
-    logger::log "T" "   host=${host}"
-    logger::log "T" "   port=${port}"
-    logger::log "T" "   command=${command}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   user=${user}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   host=${host}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   port=${port}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   command=${command}"
 
     if ! tpcp::ssh::__is_master_connection_alive "${user}" "${host}" "${port}"; then
-        logger::log "D" "Master connection ${user}@${host}:${port} is not alive."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection ${user}@${host}:${port} is not alive."
 
         tpcp::ssh::__create_master_connection "${user}" "${host}" "${port}"
     else
-        logger::log "D" "Master connection ${user}@${host}:${port} is still alive."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection ${user}@${host}:${port} is still alive."
     fi
 
     local result=0
@@ -120,9 +120,9 @@ function tpcp::ssh::run_command() {
         "${command}" || result=1
 
     if [[ ${result} -eq 0 ]]; then
-        logger::log "D" "Command '${command}' on ${user}@${host}:${port} finished successfully."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} finished successfully."
     else
-        logger::log "D" "Command '${command}' on ${user}@${host}:${port} failed."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} failed."
     fi
 
     return ${result}

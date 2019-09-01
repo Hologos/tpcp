@@ -29,25 +29,28 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
-TPCP_LOG_FILEPATH="tpcp.$(date +'%Y%m%d-%H%M%S').log"
+TPCP_CURRENT_LABEL="${__LOGGER_GLOBAL_LABEL}"
+
+TPCP_LOG_DIRPATH_ROOT="tpcp-logs"
+TPCP_LOG_DIRPATH="${TPCP_LOG_DIRPATH_ROOT}/$(date +'%Y%m%d-%H%M%S')"
 
 if [[ -z "${TPCP_LOGGER_LEVEL+_}" ]]; then
     TPCP_LOGGER_LEVEL="I"
 fi
 
 if logger::level_is_lower "${TPCP_LOGGER_LEVEL}" "D" || logger::level_is_equal "${TPCP_LOGGER_LEVEL}" "D"; then
-    TPCP_LOG_FILEPATH="tpcp.debug.log"
+    TPCP_LOG_DIRPATH="${TPCP_LOG_DIRPATH_ROOT}/debug"
 fi
 
-logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_FILEPATH}"
+logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_DIRPATH}/main.log"
 
-logger::log "I" "Program invoked as ${0} ${*}"
+logger::log "${TPCP_CURRENT_LABEL}" "I" "Program invoked as ${0} ${*}"
 
 # kill all background processes
-logger::log "D" "Setting up trap on EXIT."
+logger::log "${TPCP_CURRENT_LABEL}" "D" "Setting up trap on EXIT."
 trap tpcp::utils::exit_trap EXIT
 
-logger::log "D" "Setting up trap on INTERRUPT and TERMINATE."
+logger::log "${TPCP_CURRENT_LABEL}" "D" "Setting up trap on INTERRUPT and TERMINATE."
 trap tpcp::utils::interrupt_trap INT TERM
 
 # -- handle input parameters --------------------------------------------------
