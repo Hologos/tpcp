@@ -54,7 +54,7 @@ function saptransport::__run_actions_on_system() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   action_list=${action_list[*]}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "D" "Running actions for transport ${transport} on system ${system}."
+    logger::log "${TPCP_CURRENT_LABEL}" "I" "Running actions for transport ${transport} on system ${system}."
 
     local action=""
 
@@ -81,7 +81,7 @@ function saptransport::__run_action_on_system() {
         exit 1
     fi
 
-    logger::log "${TPCP_CURRENT_LABEL}" "D" "Running action ${action} for transport ${transport} on system ${system}."
+    logger::log "${TPCP_CURRENT_LABEL}" "I" "Running action ${action} for transport ${transport} on system ${system}."
 
     saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${transport}" "${system}" "${action}"
 
