@@ -10,9 +10,9 @@ git module ansi:
     rev: 7f72f55d87665003af5443f226346f5158071ac9
 
 curl module logger:
-    url: https://github.com/Hologos/logger/releases/download/v1.4/logger.tar.gz
+    url: https://github.com/Hologos/logger/releases/download/v1.4.1/logger.tar.gz
     unpack: tar
     pick:
         - logger
         - LICENSE
-    sha1: b01ed8cef0b4fc56fb29335186d57d8623c63fba
+    sha1: 2db78a06863cecc5ae053166b2e89bd74577490f

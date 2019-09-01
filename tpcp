@@ -29,7 +29,7 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
-TPCP_CURRENT_LABEL="${__LOGGER_GLOBAL_LABEL}"
+TPCP_CURRENT_LABEL="${LOGGER_GLOBAL_LABEL}"
 
 TPCP_LOG_DIRPATH_ROOT="tpcp-logs"
 TPCP_LOG_DIRPATH="${TPCP_LOG_DIRPATH_ROOT}/$(date +'%Y%m%d-%H%M%S')"
@@ -125,7 +125,7 @@ logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done. Stopping rendering.
 
 wait
 
-TPCP_CURRENT_LABEL="${__LOGGER_GLOBAL_LABEL}"
+TPCP_CURRENT_LABEL="${LOGGER_GLOBAL_LABEL}"
 
 logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done."
 
