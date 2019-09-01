@@ -1,8 +1,8 @@
 #! /usr/bin/env bash
 
 function tpcp::utils::usage() {
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   [no-params]"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     >&2 echo
     >&2 echo "Usage: $0 <transport-list> <system-list> <action-list>"
@@ -28,21 +28,21 @@ function tpcp::utils::usage() {
 }
 
 function tpcp::utils::terminate() {
-    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
 
     if [[ ${#} -eq 0 ]]; then
-        logger::log "T" "   [no-params]"
+        logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
     else
         local message="${1}"
 
-        logger::log "T" "   message=${message}"
+        logger::log "${TPCP_CURRENT_LABEL}" "T" "   message=${message}"
 
         # also print to STDERR
         >&2 echo
         >&2 echo "The program has been terminated due to a critical error:"
         >&2 echo "${message}"
 
-        logger::log "C" "${message}"
+        logger::log "${TPCP_CURRENT_LABEL}" "C" "${message}"
     fi
 
     exit 1
@@ -51,8 +51,8 @@ function tpcp::utils::terminate() {
 function tpcp::utils::contains_duplicates() {
     local string="${1}"
 
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   string=${string}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   string=${string}"
 
     if [[ "$(echo -n "${string}" | tr ' ' "\n" | sort | uniq -d)" != "" ]]; then
         return 0
@@ -62,49 +62,49 @@ function tpcp::utils::contains_duplicates() {
 }
 
 function tpcp::utils::interrupt_trap() {
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   [no-params]"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
-    logger::log "C" "The program is being killed! Killing all background processes."
+    logger::log "${TPCP_CURRENT_LABEL}" "C" "The program is being killed! Killing all background processes."
 
     # create signal file to stop futher processing
     touch "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_ABORT_FILENAME}"
 }
 
 function tpcp::utils::exit_trap() {
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   [no-params]"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     tpcp::render::print_log_location
 }
 
 function tpcp::utils::cleanup() {
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   [no-params]"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
-    logger::log "I" "Cleaning up temporary files."
+    logger::log "${TPCP_CURRENT_LABEL}" "I" "Cleaning up temporary files."
 
     rm -rf "${TPCP_WORK_DIRPATH}"
 }
 
 function tpcp::utils::capture_stdout() {
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   [no-params]"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     local msg=""
 
     while read msg; do
-        logger::log "I" "${msg}"
+        logger::log "${TPCP_CURRENT_LABEL}" "I" "${msg}"
     done
 }
 
 function tpcp::utils::capture_stderr() {
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   [no-params]"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     local msg=""
 
     while read msg; do
-        logger::log "W" "${msg}"
+        logger::log "${TPCP_CURRENT_LABEL}" "W" "${msg}"
     done
 }
