@@ -101,6 +101,13 @@ done &
 
 sleep 1
 
+# setup separate log file for renderer
+TPCP_CURRENT_LABEL="RENDERER"
+
+logger::init "${TPCP_CURRENT_LABEL}" "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_DIRPATH}/renderer.log"
+
+logger::log "${TPCP_CURRENT_LABEL}" "I" "Starting the renderer."
+
 while : ; do
     tpcp::renderer::render
 
@@ -114,7 +121,11 @@ while : ; do
     sleep 1
 done
 
+logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done. Stopping rendering."
+
 wait
+
+TPCP_CURRENT_LABEL="${__LOGGER_GLOBAL_LABEL}"
 
 # -- cleanup ------------------------------------------------------------------
 
