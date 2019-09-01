@@ -30,6 +30,20 @@ Log is located at tpcp.20190824-173209.log.
 * uses jobs to run actions in parallel
 * multiplexes ssh connections using MasterControl (all commands on one system are ran via single ssh connection)
 
+## Installation
+
+_TBA once building using Travis CI is fully working_
+
+### Cloning repo
+
+_If you forget to do `peru sync` after every update that contained changed `peru.yaml`, it can have undesirable consequences and cause serious problems. Use at your own risk._
+
+
+```bash
+git clone https://github.com/Hologos/tpcp
+peru sync
+```
+
 ## Description
 
 ### Usage

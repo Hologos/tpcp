@@ -1,2 +1,4 @@
 /.vscode
-/*.log
+/tpcp-logs
+/vendor
+/.peru

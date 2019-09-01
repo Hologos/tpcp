@@ -3,8 +3,12 @@
 function tpcp::inputparser::parse_transport_list() {
     local transport_list="${1}"
 
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   transport_list=${transport_list}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport_list=${transport_list}"
+
+    if ! [[ "${transport_list}" =~ [A-Z0-9] ]]; then
+        tpcp::utils::terminate "Transport list cannot be empty."
+    fi
 
     if tpcp::utils::contains_duplicates "${transport_list}"; then
         tpcp::utils::terminate "Transport list cannot have duplicates."
@@ -13,7 +17,7 @@ function tpcp::inputparser::parse_transport_list() {
     local transport=""
 
     for transport in ${transport_list}; do
-        logger::log "D" "Validating transport ${transport}."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Validating transport ${transport}."
 
         if ! [[ "${transport}" =~ ^[A-Z0-9]{3}K[A-Z0-9]{6}$ ]]; then
             tpcp::utils::terminate "'${transport}' is not a valid transport name."
@@ -26,8 +30,12 @@ function tpcp::inputparser::parse_transport_list() {
 function tpcp::inputparser::parse_system_list() {
     local system_list="${1}"
 
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   system_list=${system_list}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   system_list=${system_list}"
+
+    if ! [[ "${system_list}" =~ [A-Z0-9] ]]; then
+        tpcp::utils::terminate "System list cannot be empty."
+    fi
 
     if tpcp::utils::contains_duplicates "${system_list}"; then
         tpcp::utils::terminate "System list cannot have duplicates."
@@ -36,7 +44,7 @@ function tpcp::inputparser::parse_system_list() {
     local system=""
 
     for system in ${system_list}; do
-        logger::log "D" "Validating system ${system}."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Validating system ${system}."
 
         if ! [[ "${system}" =~ ^[A-Z0-9]{3}[0-9]{3}$ ]]; then
             tpcp::utils::terminate "'${system}' is not a valid system name."
@@ -49,8 +57,12 @@ function tpcp::inputparser::parse_system_list() {
 function tpcp::inputparser::parse_action_list() {
     local action_list="${1}"
 
-    logger::log "T" "Running ${FUNCNAME}():"
-    logger::log "T" "   action_list=${action_list}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   action_list=${action_list}"
+
+    if ! [[ "${action_list}" =~ [A-Z0-9] ]]; then
+        tpcp::utils::terminate "Action list cannot be empty."
+    fi
 
     if tpcp::utils::contains_duplicates "${action_list}"; then
         tpcp::utils::terminate "Action list cannot have duplicates."
@@ -59,7 +71,7 @@ function tpcp::inputparser::parse_action_list() {
     local action=""
 
     for action in ${action_list}; do
-        logger::log "D" "Validating action ${action}."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Validating action ${action}."
 
         if ! [[ "${action}" =~ ^(${SAPTRANSPORT_ACTION_CPY}|${SAPTRANSPORT_ACTION_ADD}|${SAPTRANSPORT_ACTION_IMP}|${SAPTRANSPORT_ACTION_DEL})$ ]]; then
             tpcp::utils::terminate "'${action}' is not a valid action."
