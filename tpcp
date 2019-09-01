@@ -127,6 +127,8 @@ wait
 
 TPCP_CURRENT_LABEL="${__LOGGER_GLOBAL_LABEL}"
 
+logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done."
+
 # -- cleanup ------------------------------------------------------------------
 
 tpcp::utils::cleanup
