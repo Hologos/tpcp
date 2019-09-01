@@ -44,6 +44,11 @@ function saptransport::__run_actions_on_system() {
     local system="${2}"
     local action_list=("${@:3}")
 
+    # setup separate log file for actions on system
+    TPCP_CURRENT_LABEL="${transport}-${system}"
+
+    logger::init "${TPCP_CURRENT_LABEL}" "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_DIRPATH}/${transport}-${system}.log"
+
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
