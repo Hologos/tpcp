@@ -29,9 +29,13 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
-TPCP_CURRENT_LABEL="${__LOGGER_GLOBAL_LABEL}"
+TPCP_CURRENT_LABEL="${LOGGER_GLOBAL_LABEL}"
 
-TPCP_LOG_DIRPATH_ROOT="tpcp-logs"
+if [[ -z "${TPCP_LOG_DIRPATH_ROOT+_}" ]] || [[ "${TPCP_LOG_DIRPATH_ROOT}" == "" ]]; then
+    TPCP_LOG_DIRPATH_ROOT="."
+fi
+
+TPCP_LOG_DIRPATH_ROOT+="/tpcp-logs"
 TPCP_LOG_DIRPATH="${TPCP_LOG_DIRPATH_ROOT}/$(date +'%Y%m%d-%H%M%S')"
 
 if [[ -z "${TPCP_LOGGER_LEVEL+_}" ]]; then
@@ -59,14 +63,13 @@ IP_TRANSPORT_LIST=()
 IP_SYSTEM_LIST=()
 IP_ACTION_LIST=()
 
-if [[ ${#} -ne 3 ]]; then
+if [[ ${#} -eq 0 ]]; then
     tpcp::utils::usage
+    logger::log "${TPCP_CURRENT_LABEL}" "C" "Terminating the program since no input given."
     tpcp::utils::terminate
 fi
 
-tpcp::inputparser::parse_transport_list "${1}"
-tpcp::inputparser::parse_system_list "${2}"
-tpcp::inputparser::parse_action_list "${3}"
+tpcp::inputparser::parse_input ${@}
 
 # -- main program -------------------------------------------------------------
 
@@ -125,7 +128,7 @@ logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done. Stopping rendering.
 
 wait
 
-TPCP_CURRENT_LABEL="${__LOGGER_GLOBAL_LABEL}"
+TPCP_CURRENT_LABEL="${LOGGER_GLOBAL_LABEL}"
 
 logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done."
 

@@ -25,6 +25,7 @@ function tpcp::utils::usage() {
     >&2 echo "    Environment variables"
     >&2 echo "        TPCP_SYSTEM_FILEPATH - filepath to system definition ini file"
     >&2 echo "        TPCP_LOGGER_LEVEL - level for logger library (default is I)"
+    >&2 echo "        TPCP_LOG_DIRPATH_ROOT - dirpath to directory (relative or absolute) where to store logs (default is .)"
 }
 
 function tpcp::utils::terminate() {
@@ -62,18 +63,18 @@ function tpcp::utils::contains_duplicates() {
 }
 
 function tpcp::utils::interrupt_trap() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "C" "The program is being killed! Killing all background processes."
+    logger::log "C" "The program is being killed! Killing all background processes."
 
     # create signal file to stop futher processing
     touch "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_ABORT_FILENAME}"
 }
 
 function tpcp::utils::exit_trap() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
+    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "   [no-params]"
 
     tpcp::render::print_log_location
 }

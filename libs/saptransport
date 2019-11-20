@@ -76,7 +76,7 @@ function saptransport::__run_action_on_system() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   action=${action}"
 
     if [[ -e "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_ABORT_FILENAME}" ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "W" "Skipping all actions for transport ${transport} on system ${system}."
+        logger::log "${TPCP_CURRENT_LABEL}" "W" "Aborting the program. Skipping all actions for transport ${transport} on system ${system}."
 
         exit 1
     fi

@@ -1,82 +1,129 @@
 #! /usr/bin/env bash
 
-function tpcp::inputparser::parse_transport_list() {
-    local transport_list="${1}"
-
+function tpcp::inputparser::parse_input() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport_list=${transport_list}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   input=${*}"
 
-    if ! [[ "${transport_list}" =~ [A-Z0-9] ]]; then
-        tpcp::utils::terminate "Transport list cannot be empty."
-    fi
+    local MODE_TRANSPORT="transport"
+    local MODE_SYSTEM="system"
+    local MODE_ACTION="action"
+    local MODE_ERROR="error"
 
-    if tpcp::utils::contains_duplicates "${transport_list}"; then
+    local mode="${MODE_TRANSPORT}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Setting parsing mode to '${mode}'."
+
+    while [[ ${#} -ne 0 ]] && [[ "${1}" != "" ]]; do
+        local input="${1}"
+
+        case "${mode}" in
+            "${MODE_TRANSPORT}")
+                logger::log "${TPCP_CURRENT_LABEL}" "D" "Validating input '${input}' as transport."
+
+                if ! tpcp::inputparser::is_transport "${input}"; then
+                    mode="${MODE_SYSTEM}"
+
+                    logger::log "${TPCP_CURRENT_LABEL}" "D" "Setting parsing mode to '${mode}'."
+
+                    continue
+                fi
+
+                IP_TRANSPORT_LIST+=( "${input}" )
+            ;;
+
+            "${MODE_SYSTEM}")
+                logger::log "${TPCP_CURRENT_LABEL}" "D" "Validating input '${input}' as system."
+
+                if ! tpcp::inputparser::is_system "${input}"; then
+                    logger::log "${TPCP_CURRENT_LABEL}" "D" "'${input}' is not a valid system name."
+
+                    mode="${MODE_ACTION}"
+
+                    logger::log "${TPCP_CURRENT_LABEL}" "D" "Setting parsing mode to '${mode}'."
+
+                    continue
+                fi
+
+                IP_SYSTEM_LIST+=( "${input}" )
+            ;;
+
+            "${MODE_ACTION}")
+                logger::log "${TPCP_CURRENT_LABEL}" "D" "Validating input '${input}' as action."
+
+                if ! tpcp::inputparser::is_action "${input}"; then
+                    logger::log "${TPCP_CURRENT_LABEL}" "D" "'${input}' is not a valid action."
+
+                    mode="${MODE_ERROR}"
+
+                    logger::log "${TPCP_CURRENT_LABEL}" "D" "Setting parsing mode to '${mode}'."
+
+                    continue
+                fi
+
+                IP_ACTION_LIST+=( "${input}" )
+            ;;
+
+            *)
+                tpcp::utils::terminate "'${input}' is not a valid transport, system nor action."
+        esac
+
+        shift
+    done
+
+    if tpcp::utils::contains_duplicates "${IP_TRANSPORT_LIST[*]}"; then
         tpcp::utils::terminate "Transport list cannot have duplicates."
     fi
 
-    local transport=""
-
-    for transport in ${transport_list}; do
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Validating transport ${transport}."
-
-        if ! [[ "${transport}" =~ ^[A-Z0-9]{3}K[A-Z0-9]{6}$ ]]; then
-            tpcp::utils::terminate "'${transport}' is not a valid transport name."
-        fi
-
-        IP_TRANSPORT_LIST+=( "${transport}" )
-    done
-}
-
-function tpcp::inputparser::parse_system_list() {
-    local system_list="${1}"
-
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   system_list=${system_list}"
-
-    if ! [[ "${system_list}" =~ [A-Z0-9] ]]; then
-        tpcp::utils::terminate "System list cannot be empty."
-    fi
-
-    if tpcp::utils::contains_duplicates "${system_list}"; then
+    if tpcp::utils::contains_duplicates "${IP_SYSTEM_LIST[*]}"; then
         tpcp::utils::terminate "System list cannot have duplicates."
     fi
 
-    local system=""
-
-    for system in ${system_list}; do
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Validating system ${system}."
-
-        if ! [[ "${system}" =~ ^[A-Z0-9]{3}[0-9]{3}$ ]]; then
-            tpcp::utils::terminate "'${system}' is not a valid system name."
-        fi
-
-        IP_SYSTEM_LIST+=( "${system}" )
-    done
-}
-
-function tpcp::inputparser::parse_action_list() {
-    local action_list="${1}"
-
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   action_list=${action_list}"
-
-    if ! [[ "${action_list}" =~ [A-Z0-9] ]]; then
-        tpcp::utils::terminate "Action list cannot be empty."
-    fi
-
-    if tpcp::utils::contains_duplicates "${action_list}"; then
+    if tpcp::utils::contains_duplicates "${IP_ACTION_LIST[*]}"; then
         tpcp::utils::terminate "Action list cannot have duplicates."
     fi
+}
 
-    local action=""
+function tpcp::inputparser::is_transport() {
+    local transport="${1}"
 
-    for action in ${action_list}; do
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Validating action ${action}."
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
 
-        if ! [[ "${action}" =~ ^(${SAPTRANSPORT_ACTION_CPY}|${SAPTRANSPORT_ACTION_ADD}|${SAPTRANSPORT_ACTION_IMP}|${SAPTRANSPORT_ACTION_DEL})$ ]]; then
-            tpcp::utils::terminate "'${action}' is not a valid action."
-        fi
+    if [[ "${transport}" =~ ^[A-Z0-9]{3}K[A-Z0-9]{6}$ ]]; then
+        return 0
+    fi
 
-        IP_ACTION_LIST+=( "${action}" )
-    done
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "'${transport}' is not a valid transport name."
+
+    return 1
+}
+
+function tpcp::inputparser::is_system() {
+    local system="${1}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
+
+    if [[ "${system}" =~ ^[A-Z0-9]{3}[0-9]{3}$ ]]; then
+        return 0
+    fi
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "'${system}' is not a valid system name."
+
+    return 1
+}
+
+function tpcp::inputparser::is_action() {
+    local action="${1}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   action=${action}"
+
+    if [[ "${action}" =~ ^(${SAPTRANSPORT_ACTION_CPY}|${SAPTRANSPORT_ACTION_ADD}|${SAPTRANSPORT_ACTION_IMP}|${SAPTRANSPORT_ACTION_DEL})$ ]]; then
+        return 0
+    fi
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "'${action}' is not a valid action."
+
+    return 1
 }

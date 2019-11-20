@@ -13,7 +13,9 @@ function tpcp::ssh::__close_master_connection() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   host=${host}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   port=${port}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "D" "Closing master connection ${user}@${host}:${port}."
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Closing master connection to ${user}@${host}:${port}."
+
+    local rc=0
 
     ssh                                                 \
         -o ConnectTimeout=5                             \
@@ -25,7 +27,15 @@ function tpcp::ssh::__close_master_connection() {
                                                         \
         -O stop                                         \
                                                         \
-        "${user}"@"${host}"
+        "${user}"@"${host}" || rc=${?}
+
+    if [[ ${rc} -eq 0 ]]; then
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully closed."
+    else
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Closing master connection to ${user}@${host}:${port} failed (rc=${rc})."
+    fi
+
+    return ${rc}
 }
 
 function tpcp::ssh::__is_master_connection_alive() {
@@ -38,6 +48,8 @@ function tpcp::ssh::__is_master_connection_alive() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   host=${host}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   port=${port}"
 
+    local rc=0
+
     ssh                                                 \
         -o ConnectTimeout=5                             \
         -o BatchMode=yes                                \
@@ -48,7 +60,9 @@ function tpcp::ssh::__is_master_connection_alive() {
                                                         \
         -O check                                        \
                                                         \
-        "${user}"@"${host}"
+        "${user}"@"${host}" || rc=${?}
+
+    return ${rc}
 }
 
 function tpcp::ssh::__create_master_connection() {
@@ -61,13 +75,15 @@ function tpcp::ssh::__create_master_connection() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   host=${host}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   port=${port}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "D" "Creating master connection ${user}@${host}:${port}."
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Creating master connection to ${user}@${host}:${port}."
 
     # Explanation:
     #   -M                   - places the ssh client into ``master'' mode for connection sharing
     #   -N                   - do not execute a remote command
     #   -f                   - requests ssh to go to background just before command execution.
     #   -o ControlPersist=2m - keep the connection open for 2 minutes
+
+    local rc=0
 
     ssh                                                 \
         -M                                              \
@@ -82,7 +98,15 @@ function tpcp::ssh::__create_master_connection() {
         -S "${SSH_MASTER_CONTROL_SOCKET_FILEPATH}"      \
         -p "${port}"                                    \
                                                         \
-        "${user}"@"${host}"
+        "${user}"@"${host}" || rc=${?}
+
+    if [[ ${rc} -eq 0 ]]; then
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully created."
+    else
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Creating master connection to ${user}@${host}:${port} failed (rc=${rc})."
+    fi
+
+    return ${rc}
 }
 
 function tpcp::ssh::run_command() {
@@ -98,14 +122,16 @@ function tpcp::ssh::run_command() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   command=${command}"
 
     if ! tpcp::ssh::__is_master_connection_alive "${user}" "${host}" "${port}"; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection ${user}@${host}:${port} is not alive."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} is not alive."
 
         tpcp::ssh::__create_master_connection "${user}" "${host}" "${port}"
     else
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection ${user}@${host}:${port} is still alive."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} is still alive."
     fi
 
-    local result=0
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Running command '${command}' on ${user}@${host}:${port}."
+
+    local rc=0
 
     ssh                                                 \
         -o ConnectTimeout=5                             \
@@ -117,13 +143,13 @@ function tpcp::ssh::run_command() {
                                                         \
         "${user}"@"${host}"                             \
                                                         \
-        "${command}" || result=1
+        "${command}" || rc=${?}
 
-    if [[ ${result} -eq 0 ]]; then
+    if [[ ${rc} -eq 0 ]]; then
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} finished successfully."
     else
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} failed."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} failed (rc=${rc})."
     fi
 
-    return ${result}
+    return ${rc}
 }
