@@ -31,7 +31,11 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 # -- initial setup ------------------------------------------------------------
 TPCP_CURRENT_LABEL="${LOGGER_GLOBAL_LABEL}"
 
-TPCP_LOG_DIRPATH_ROOT="tpcp-logs"
+if [[ -z "${TPCP_LOG_DIRPATH_ROOT+_}" ]] || [[ "${TPCP_LOG_DIRPATH_ROOT}" == "" ]]; then
+    TPCP_LOG_DIRPATH_ROOT="."
+fi
+
+TPCP_LOG_DIRPATH_ROOT+="/tpcp-logs"
 TPCP_LOG_DIRPATH="${TPCP_LOG_DIRPATH_ROOT}/$(date +'%Y%m%d-%H%M%S')"
 
 if [[ -z "${TPCP_LOGGER_LEVEL+_}" ]]; then
