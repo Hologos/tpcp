@@ -32,7 +32,7 @@ function tpcp::ssh::__close_master_connection() {
     if [[ ${rc} -eq 0 ]]; then
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully closed."
     else
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Closing master connection to ${user}@${host}:${port} failed."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Closing master connection to ${user}@${host}:${port} failed (rc=${rc})."
     fi
 
     return ${rc}
@@ -103,7 +103,7 @@ function tpcp::ssh::__create_master_connection() {
     if [[ ${rc} -eq 0 ]]; then
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully created."
     else
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Creating master connection to ${user}@${host}:${port} failed."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Creating master connection to ${user}@${host}:${port} failed (rc=${rc})."
     fi
 
     return ${rc}
@@ -148,7 +148,7 @@ function tpcp::ssh::run_command() {
     if [[ ${rc} -eq 0 ]]; then
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} finished successfully."
     else
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} failed."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} failed (rc=${rc})."
     fi
 
     return ${rc}
