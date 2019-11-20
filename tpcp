@@ -65,6 +65,7 @@ IP_ACTION_LIST=()
 
 if [[ ${#} -eq 0 ]]; then
     tpcp::utils::usage
+    logger::log "${TPCP_CURRENT_LABEL}" "C" "Terminating the program since no input given."
     tpcp::utils::terminate
 fi
 
