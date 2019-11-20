@@ -30,7 +30,7 @@ function tpcp::ssh::__close_master_connection() {
         "${user}"@"${host}" || rc=${?}
 
     if [[ ${rc} -eq 0 ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully closed."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully closed (rc=${rc})."
     else
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Closing master connection to ${user}@${host}:${port} failed (rc=${rc})."
     fi
@@ -63,7 +63,7 @@ function tpcp::ssh::__is_master_connection_alive() {
         "${user}"@"${host}" || rc=${?}
 
     if [[ ${rc} -eq 0 ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Checking master connection to ${user}@${host}:${port} was successful."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Checking master connection to ${user}@${host}:${port} was successful (rc=${rc})."
     else
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Checking master connection to ${user}@${host}:${port} failed (rc=${rc})."
     fi
@@ -107,7 +107,7 @@ function tpcp::ssh::__create_master_connection() {
         "${user}"@"${host}" || rc=${?}
 
     if [[ ${rc} -eq 0 ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully created."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully created (rc=${rc})."
     else
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Creating master connection to ${user}@${host}:${port} failed (rc=${rc})."
     fi
@@ -152,7 +152,7 @@ function tpcp::ssh::run_command() {
         "${command}" || rc=${?}
 
     if [[ ${rc} -eq 0 ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} finished successfully."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} finished successfully (rc=${rc})."
     else
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} failed (rc=${rc})."
     fi
