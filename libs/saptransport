@@ -59,9 +59,14 @@ function saptransport::__run_actions_on_system() {
     local action=""
 
     for action in "${action_list[@]}"; do
-        saptransport::__run_action_on_system "${transport}" "${system}" "${action}"
+        saptransport::__run_action_on_system "${transport}" "${system}" "${action}" || {
+            logger::log "E" "Processing transport ${transport} on system ${system} failed while executing action ${action}."
+
+            return 1
+        }
     done
 
+    logger::log "I" "All actions for transport ${transport} on system ${system} were successfully completed."
     logger::log "${TPCP_CURRENT_LABEL}" "I" "All actions for transport ${transport} on system ${system} were successfully completed."
 }
 
