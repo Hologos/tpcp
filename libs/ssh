@@ -105,6 +105,8 @@ function tpcp::ssh::run_command() {
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} is still alive."
     fi
 
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Running command '${command}' on ${user}@${host}:${port}."
+
     local result=0
 
     ssh                                                 \
