@@ -26,10 +26,10 @@ function tpcp::utils::usage() {
     >&2 echo "            ${fmt_bold}${SAPTRANSPORT_ACTION_IMP}${fmt_reset} - import transport into system"
     >&2 echo "            ${fmt_bold}${SAPTRANSPORT_ACTION_DEL}${fmt_reset} - delete transport from import queue"
     >&2 echo
-    >&2 echo "    ${fmt_italic}Environment variables${fmt_reset}"
-    >&2 echo "          ${fmt_bold}TPCP_SYSTEM_FILEPATH${fmt_reset} - filepath to system definition ini file"
-    >&2 echo "          ${fmt_bold}TPCP_LOGGER_LEVEL${fmt_reset} - level for logger library (default is I)"
-    >&2 echo "          ${fmt_bold}TPCP_LOG_DIRPATH_ROOT${fmt_reset} - dirpath to directory (relative or absolute) where to store logs (default is .)"
+    >&2 echo "${fmt_italic}Environment variables${fmt_reset}"
+    >&2 echo "    ${fmt_bold}TPCP_SYSTEM_FILEPATH${fmt_reset} - filepath to system definition ini file"
+    >&2 echo "    ${fmt_bold}TPCP_LOGGER_LEVEL${fmt_reset} - level for logger library (default is I)"
+    >&2 echo "    ${fmt_bold}TPCP_LOG_DIRPATH_ROOT${fmt_reset} - dirpath to directory (relative or absolute) where to store logs (default is .)"
 }
 
 function tpcp::utils::terminate() {
