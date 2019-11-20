@@ -62,6 +62,12 @@ function tpcp::ssh::__is_master_connection_alive() {
                                                         \
         "${user}"@"${host}" || rc=${?}
 
+    if [[ ${rc} -eq 0 ]]; then
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Checking master connection to ${user}@${host}:${port} was successful."
+    else
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Checking master connection to ${user}@${host}:${port} failed (rc=${rc})."
+    fi
+
     return ${rc}
 }
 
