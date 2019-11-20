@@ -63,14 +63,12 @@ IP_TRANSPORT_LIST=()
 IP_SYSTEM_LIST=()
 IP_ACTION_LIST=()
 
-if [[ ${#} -ne 3 ]]; then
+if [[ ${#} -eq 0 ]]; then
     tpcp::utils::usage
     tpcp::utils::terminate
 fi
 
-tpcp::inputparser::parse_transport_list "${1}"
-tpcp::inputparser::parse_system_list "${2}"
-tpcp::inputparser::parse_action_list "${3}"
+tpcp::inputparser::parse_input ${@}
 
 # -- main program -------------------------------------------------------------
 
