@@ -165,9 +165,9 @@ function tpcp::ssh::run_command() {
         "${command}" || rc=${?}
 
     if [[ ${rc} -le ${rc_threshold} ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} finished successfully (rc=${rc})."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} finished successfully (rc=${rc}, rc-threshold=${rc_threshold})."
     else
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} failed (rc=${rc})."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} failed (rc=${rc}, rc-threshold=${rc_threshold})."
     fi
 
     return ${rc}
