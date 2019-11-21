@@ -30,7 +30,7 @@ function tpcp::ssh::__close_master_connection() {
         "${user}"@"${host}" || rc=${?}
 
     if [[ ${rc} -eq 0 ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully closed."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully closed (rc=${rc})."
     else
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Closing master connection to ${user}@${host}:${port} failed (rc=${rc})."
     fi
@@ -61,6 +61,12 @@ function tpcp::ssh::__is_master_connection_alive() {
         -O check                                        \
                                                         \
         "${user}"@"${host}" || rc=${?}
+
+    if [[ ${rc} -eq 0 ]]; then
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Checking master connection to ${user}@${host}:${port} was successful (rc=${rc})."
+    else
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Checking master connection to ${user}@${host}:${port} failed (rc=${rc})."
+    fi
 
     return ${rc}
 }
@@ -101,7 +107,7 @@ function tpcp::ssh::__create_master_connection() {
         "${user}"@"${host}" || rc=${?}
 
     if [[ ${rc} -eq 0 ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully created."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Master connection to ${user}@${host}:${port} successfully created (rc=${rc})."
     else
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Creating master connection to ${user}@${host}:${port} failed (rc=${rc})."
     fi
@@ -110,12 +116,25 @@ function tpcp::ssh::__create_master_connection() {
 }
 
 function tpcp::ssh::run_command() {
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+
+    local rc_threshold=0
+
+    case "${1}" in
+        --rc-threshold=* )
+            logger::log "${TPCP_CURRENT_LABEL}" "T" "   ${1}"
+
+            rc_threshold="$(echo "${1}" | cut -d "=" -f 2)"
+
+            shift
+        ;;
+    esac
+
     local user="${1}"
     local host="${2}"
     local port="${3}"
     local command="${4}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   user=${user}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   host=${host}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   port=${port}"
@@ -145,10 +164,10 @@ function tpcp::ssh::run_command() {
                                                         \
         "${command}" || rc=${?}
 
-    if [[ ${rc} -eq 0 ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} finished successfully."
+    if [[ ${rc} -le ${rc_threshold} ]]; then
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} finished successfully (rc=${rc}, rc-threshold=${rc_threshold})."
     else
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} failed (rc=${rc})."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Command '${command}' on ${user}@${host}:${port} failed (rc=${rc}, rc-threshold=${rc_threshold})."
     fi
 
     return ${rc}
