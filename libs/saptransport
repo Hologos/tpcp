@@ -116,6 +116,8 @@ function saptransport::__run_action_on_system() {
         return 1
     fi
 
+    local rc_threshold=0
+
     case "${action}" in
         "${SAPTRANSPORT_ACTION_CPY}" )
             # copies transport from source system
@@ -146,6 +148,8 @@ function saptransport::__run_action_on_system() {
         ;;
 
         "${SAPTRANSPORT_ACTION_IMP}" )
+            rc_threshold=4
+
             ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp IMPORT ${transport} ${SID} client=${client} U128 pf=/usr/sap/trans/bin/TP_DOMAIN_${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]}.PFL")
         ;;
 
@@ -163,6 +167,8 @@ function saptransport::__run_action_on_system() {
         local rc=0
 
         tpcp::ssh::run_command                      \
+            --rc-threshold="${rc_threshold}"        \
+                                                    \
             "${ssh_user}"                           \
             "${ssh_host}"                           \
             "${ssh_port}"                           \
@@ -170,9 +176,9 @@ function saptransport::__run_action_on_system() {
             "${ssh_command}"                        \
                 1> >(tpcp::utils::capture_stdout)   \
                 2> >(tpcp::utils::capture_stderr)   \
-                || rc=1
+                || rc=${?}
 
-        if [[ ${rc} -ne 0 ]]; then
+        if [[ ${rc} -gt ${rc_threshold} ]]; then
             logger::log "${TPCP_CURRENT_LABEL}" "E" "There was an error while running action ${action} for transport ${transport} on system ${system}."
 
             saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
