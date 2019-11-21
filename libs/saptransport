@@ -124,6 +124,17 @@ function saptransport::__run_action_on_system() {
             local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${sid_source}]}"
             local ssh_port="22"
 
+            local domain_controller_source="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid_source}]}"
+
+            # copying transport files within a transport domain
+            if [[ "${domain_controller_source}" == "${domain_controller}" ]]; then
+                logger::log "${TPCP_CURRENT_LABEL}" "N" "No need to copy transport files, they are reachable within the transport domain (source=DOMAIN_${domain_controller_source}, target=DOMAIN_${domain_controller})."
+
+                saptransport::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${transport}" "${system}" "${action}"
+
+                return 0
+            fi
+
             ssh_commands+=("scp -p -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/cofiles/K${transport_label}.${sid_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/cofiles/")
             ssh_commands+=("scp -p -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/data/R${transport_label}.${sid_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/data/")
         ;;
