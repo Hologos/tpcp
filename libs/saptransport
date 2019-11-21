@@ -365,7 +365,7 @@ function saptransport::__cache_transport_domain() {
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for ${SID}."
 
     local rc=0
-    local ssh_command="egrep -o '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
+    local ssh_command="egrep -x '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
     local cache_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${SID}"
 
     tpcp::ssh::run_command                      \
