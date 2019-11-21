@@ -58,6 +58,7 @@ fi
 
 logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_DIRPATH}/main.log"
 
+logger::log "${TPCP_CURRENT_LABEL}" "I" "Running tpcp v${TPCP_VERSION}."
 logger::log "${TPCP_CURRENT_LABEL}" "I" "Program invoked as ${0} ${*}"
 
 # kill all background processes
