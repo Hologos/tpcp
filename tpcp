@@ -50,7 +50,7 @@ if logger::level_is_lower "${TPCP_LOGGER_LEVEL}" "D" || logger::level_is_equal "
     if [[ -e "${TPCP_LOG_DIRPATH}" ]]; then
         mv "${TPCP_LOG_DIRPATH}" "${TPCP_LOG_DIRPATH}.moved-on-$(date +'%Y%m%d-%H%M%S')" || { \
             >&2 echo
-            >&2 ansi --bold --red "Aborting program to prevent mixing files from different runs. Cannot move ${TPCP_LOG_DIRPATH} to ."
+            >&2 ansi --bold --red "Aborting program to prevent mixing files from different runs. Cannot move ${TPCP_LOG_DIRPATH}."
             exit 1
         }
     fi
