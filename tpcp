@@ -29,6 +29,7 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
+TPCP_VERSION="<<VERSION>>"
 TPCP_CURRENT_LABEL="${LOGGER_GLOBAL_LABEL}"
 
 if [[ -z "${TPCP_LOG_DIRPATH_ROOT+_}" ]] || [[ "${TPCP_LOG_DIRPATH_ROOT}" == "" ]]; then
