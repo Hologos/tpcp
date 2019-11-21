@@ -44,6 +44,15 @@ fi
 
 if logger::level_is_lower "${TPCP_LOGGER_LEVEL}" "D" || logger::level_is_equal "${TPCP_LOGGER_LEVEL}" "D"; then
     TPCP_LOG_DIRPATH="${TPCP_LOG_DIRPATH_ROOT}/debug"
+
+    # to prevent appending text to existing files and mixing files from different runs
+    if [[ -e "${TPCP_LOG_DIRPATH}" ]]; then
+        mv "${TPCP_LOG_DIRPATH}" "${TPCP_LOG_DIRPATH}.moved-on-$(date +'%Y%m%d-%H%M%S')" || { \
+            >&2 echo
+            >&2 ansi --bold --red "Aborting program to prevent mixing files from different runs. Cannot move ${TPCP_LOG_DIRPATH} to ."
+            exit 1
+        }
+    fi
 fi
 
 logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_DIRPATH}/main.log"
