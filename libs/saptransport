@@ -110,26 +110,12 @@ function saptransport::__run_action_on_system() {
     local ssh_port="22"
     local ssh_commands=()
 
-    if ! saptransport::__cache_transport_domain "${sid}"; then
-        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
-
-        return 1
-    fi
-
     local rc_threshold=0
 
     case "${action}" in
         "${SAPTRANSPORT_ACTION_CPY}" )
             # copies transport from source system
             local sid_source="$(saptransport::__get_sid_from_transport "${transport}")"
-
-            if ! saptransport::__hostname_exists "${sid_source}"; then
-                logger::log "${TPCP_CURRENT_LABEL}" "C" "Hostname for SID ${sid_source} not found."
-
-                saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
-
-                return 1
-            fi
 
             local ssh_target_user="${ssh_user}"
             local ssh_target_host="${ssh_host}"
