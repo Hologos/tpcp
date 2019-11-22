@@ -108,6 +108,12 @@ for transport in "${IP_TRANSPORT_LIST[@]}"; do
     done
 done
 
+echo
+echo "Caching information about transport domains."
+
+# cache transport domains in advance so all background processes have full transport domains map
+saptransport::cache_transport_domains "IP_SYSTEM_LIST[@]"
+
 # process all transports on all systems
 for transport in "${IP_TRANSPORT_LIST[@]}"; do
     saptransport::process_transport "${transport}" "IP_SYSTEM_LIST[@]" "IP_ACTION_LIST[@]" # hack to pass 2 arrays as argument
