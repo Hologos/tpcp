@@ -409,8 +409,8 @@ function saptransport::__cache_transport_domain() {
         return 1
     fi
 
-    SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${sid}" )" \
-        || tpcp::utils::terminate "Cannot load domain controller from file '${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${sid}'."
+    SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]="$( < "${cache_filepath}" )" \
+        || tpcp::utils::terminate "Cannot load domain controller from file '${cache_filepath}'."
 
     local domain_controller="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]}"
 
