@@ -429,6 +429,13 @@ function saptransport::__cache_transport_domain() {
     local domain_controller="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Transport domain for ${sid} is ${domain_controller}."
+
+    # cache domain controller as well
+    if ! [[ ${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${domain_controller}]+_} ]]; then
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for domain controller ${domain_controller}."
+
+        SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${domain_controller}]="${domain_controller}"
+    fi
 }
 
 function saptransport::__hostname_exists() {
