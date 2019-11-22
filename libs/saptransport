@@ -110,6 +110,7 @@ function saptransport::__run_action_on_system() {
     local ssh_port="22"
     local ssh_commands=()
 
+    local domain_controller="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]}"
     local rc_threshold=0
 
     case "${action}" in
@@ -130,17 +131,17 @@ function saptransport::__run_action_on_system() {
         ;;
 
         "${SAPTRANSPORT_ACTION_ADD}" )
-            ssh_commands+=("/usr/sap/${sid}/SYS/exe/run/tp ADDTOBUFFER ${transport} ${sid} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]}.PFL")
+            ssh_commands+=("/usr/sap/${sid}/SYS/exe/run/tp ADDTOBUFFER ${transport} ${sid} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         "${SAPTRANSPORT_ACTION_IMP}" )
             rc_threshold=4
 
-            ssh_commands+=("/usr/sap/${sid}/SYS/exe/run/tp IMPORT ${transport} ${sid} client=${client} U128 pf=/usr/sap/trans/bin/TP_DOMAIN_${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]}.PFL")
+            ssh_commands+=("/usr/sap/${sid}/SYS/exe/run/tp IMPORT ${transport} ${sid} client=${client} U128 pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         "${SAPTRANSPORT_ACTION_DEL}" )
-            ssh_commands+=("/usr/sap/${sid}/SYS/exe/run/tp DELFROMBUFFER ${transport} ${sid} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]}.PFL")
+            ssh_commands+=("/usr/sap/${sid}/SYS/exe/run/tp DELFROMBUFFER ${transport} ${sid} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         * )
