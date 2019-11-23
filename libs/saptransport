@@ -96,7 +96,7 @@ function saptransport::__run_action_on_system() {
     local transport_label="$(saptransport::__get_transport_label "${transport}")"
 
     if ! saptransport::__hostname_exists "${sid}"; then
-        logger::log "${TPCP_CURRENT_LABEL}" "C" "Hostname for SID ${sid} not found."
+        logger::log "${TPCP_CURRENT_LABEL}" "E" "Hostname for SID ${sid} not found."
 
         saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
 
