@@ -7,6 +7,7 @@ TPCP_RENDERER_SYMBOL_RUNNING="..."
 TPCP_RENDERER_SYMBOL_FINISHED="✔"
 TPCP_RENDERER_SYMBOL_FAILED="$(ansi --red --no-newline "✖")"
 TPCP_RENDERER_SYMBOL_SKIPPED="-"
+TPCP_RENDERER_SYMBOL_WAITING="w"
 
 function tpcp::renderer::render() {
     logger::log "${TPCP_CURRENT_LABEL}"  "T" "Running ${FUNCNAME}():"
@@ -88,6 +89,12 @@ function tpcp::renderer::render() {
                     "${SAPTRANSPORT_STATUS_SKIPPED}" )
                         line+=" "                                #   indentation = 1 character
                         line+="${TPCP_RENDERER_SYMBOL_SKIPPED}"  # action result = 1 character
+                        line+="  "                               #   indentation = 2 characters
+                    ;;
+
+                    "${SAPTRANSPORT_STATUS_WAITING}" )
+                        line+=" "                                #   indentation = 1 character
+                        line+="${TPCP_RENDERER_SYMBOL_WAITING}"  # action result = 1 character
                         line+="  "                               #   indentation = 2 characters
                     ;;
 
