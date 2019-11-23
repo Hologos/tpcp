@@ -408,11 +408,13 @@ function saptransport::__cache_transport_domain() {
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Transport domain for ${sid} is ${domain_controller}."
 
     # cache domain controller as well
-    local cache_filepath_domain_controller="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${domain_controller}"
+    if [[ "${sid}" != "${domain_controller}" ]]; then
+        local cache_filepath_domain_controller="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${domain_controller}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for domain controller ${domain_controller}."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for domain controller ${domain_controller}."
 
-    echo -n "${domain_controller}" > "${cache_filepath_domain_controller}"
+        echo -n "${domain_controller}" > "${cache_filepath_domain_controller}"
+    fi
 }
 
 function saptransport::__hostname_exists() {
