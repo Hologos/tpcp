@@ -13,6 +13,7 @@ SAPTRANSPORT_STATUS_RUNNING="RUNNING"
 SAPTRANSPORT_STATUS_FAILED="FAILED"
 SAPTRANSPORT_STATUS_FINISHED="FINISHED"
 SAPTRANSPORT_STATUS_SKIPPED="SKIPPED"
+SAPTRANSPORT_STATUS_WAITING="WAITING"
 
 SAPTRANSPORT_STATUS_FILENAME_PART="saptransport_status"
 SAPTRANSPORT_ABORT_FILENAME="saptransport_abort"
@@ -91,70 +92,115 @@ function saptransport::__run_action_on_system() {
 
     saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${transport}" "${system}" "${action}"
 
-    local SID="$(saptransport::__get_SID "${system}")"
+    local sid="$(saptransport::__get_sid "${system}")"
     local client="$(saptransport::__get_client "${system}")"
-    local sg_name="$(saptransport::__get_system_group_name "${SID}")"
-    local sg_role="$(saptransport::__get_system_group_role "${SID}")"
     local transport_label="$(saptransport::__get_transport_label "${transport}")"
 
-    if ! saptransport::__hostname_exists "${SID}"; then
-        logger::log "${TPCP_CURRENT_LABEL}" "C" "Hostname for SID ${SID} not found."
+    if ! saptransport::__hostname_exists "${sid}"; then
+        logger::log "${TPCP_CURRENT_LABEL}" "E" "Hostname for SID ${sid} not found."
 
         saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
 
         return 1
     fi
 
-    local ssh_user="${SID,,}adm"
-    local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${SID}]}"
+    local ssh_user="${sid,,}adm"
+    local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${sid}]}"
     local ssh_port="22"
     local ssh_commands=()
 
-    if ! saptransport::__cache_transport_domain "${SID}" "${ssh_user}" "${ssh_host}" "${ssh_port}"; then
-        saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
-
-        return 1
-    fi
-
+    local domain_controller="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]}"
     local rc_threshold=0
 
     case "${action}" in
         "${SAPTRANSPORT_ACTION_CPY}" )
             # copies transport from source system
-            local SID_source="$(saptransport::__get_SID_from_transport "${transport}")"
-
-            if ! saptransport::__hostname_exists "${SID_source}"; then
-                logger::log "${TPCP_CURRENT_LABEL}" "C" "Hostname for SID ${SID_source} not found."
-
-                saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
-
-                return 1
-            fi
+            local sid_source="$(saptransport::__get_sid_from_transport "${transport}")"
 
             local ssh_target_user="${ssh_user}"
             local ssh_target_host="${ssh_host}"
             local ssh_target_port="${ssh_port}"
 
-            local ssh_user="${SID_source,,}adm"
-            local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${SID_source}]}"
+            local ssh_user="${sid_source,,}adm"
+            local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${sid_source}]}"
             local ssh_port="22"
 
-            ssh_commands+=("scp -p -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/cofiles/K${transport_label}.${SID_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/cofiles/")
-            ssh_commands+=("scp -p -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/data/R${transport_label}.${SID_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/data/")
+            local domain_controller_source="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid_source}]}"
+            local selected_system="$(saptransport::__get_system_from_requested_transport_domain "${domain_controller}" "${IP_SYSTEM_LIST[@]}")" || { \
+                saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
+
+                tpcp::utils::terminate "Cannot find system from requested transport domain ${domain_controller}."
+            }
+
+            # copying transport files within a transport domain
+            if [[ "${domain_controller_source}" == "${domain_controller}" ]]; then
+                logger::log "${TPCP_CURRENT_LABEL}" "N" "No need to copy transport files, they are reachable within the transport domain (source=DOMAIN_${domain_controller_source}, target=DOMAIN_${domain_controller})."
+
+                saptransport::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${transport}" "${system}" "${action}"
+
+                return 0
+
+            # copying transport files across transport domains but this is not selected system
+            elif [[ "${system}" != "${selected_system}" ]]; then
+                logger::log "${TPCP_CURRENT_LABEL}" "N" "Transport files will be copied only to selected system ${selected_system} (source=DOMAIN_${domain_controller_source}, target=DOMAIN_${domain_controller})."
+
+                logger::log "${TPCP_CURRENT_LABEL}" "N" "Waiting for transport copy to finish on selected system ${selected_system}."
+
+                saptransport::record_status "${SAPTRANSPORT_STATUS_WAITING}" "${transport}" "${system}" "${action}"
+
+                while : ; do
+                    sleep 1
+
+                    local status="$(saptransport::read_status "${transport}" "${selected_system}" "${action}")"
+
+                    case "${status}" in
+                        "${SAPTRANSPORT_STATUS_FINISHED}" )
+                            break
+                        ;;
+
+                        "${SAPTRANSPORT_STATUS_FAILED}" )
+                            logger::log "${TPCP_CURRENT_LABEL}" "E" "Copying transport files to selected system ${selected_system} failed."
+
+                            saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
+
+                            return 1
+                        ;;
+
+                        "${SAPTRANSPORT_STATUS_SKIPPED}" | "${SAPTRANSPORT_STATUS_WAITING}" )
+                            logger::log "${TPCP_CURRENT_LABEL}" "E" "Copying action on selected system ${selected_system} cannot be in this state ${status}."
+
+                            saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
+
+                            return 1
+                        ;;
+                    esac
+                done
+
+                logger::log "${TPCP_CURRENT_LABEL}" "N" "Transport files were successfully copied to selected system ${selected_system}."
+
+                saptransport::record_status "${SAPTRANSPORT_STATUS_SKIPPED}" "${transport}" "${system}" "${action}"
+
+                return 0
+            fi
+
+            logger::log "${TPCP_CURRENT_LABEL}" "I" "Copying transport files since this is selected system."
+
+            ssh_commands+=("scp -p -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/cofiles/K${transport_label}.${sid_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/cofiles/")
+            ssh_commands+=("scp -p -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/data/R${transport_label}.${sid_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/data/")
         ;;
 
         "${SAPTRANSPORT_ACTION_ADD}" )
-            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp ADDTOBUFFER ${transport} ${SID} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]}.PFL")
+            ssh_commands+=("/usr/sap/${sid}/SYS/exe/run/tp ADDTOBUFFER ${transport} ${sid} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         "${SAPTRANSPORT_ACTION_IMP}" )
             rc_threshold=4
 
-            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp IMPORT ${transport} ${SID} client=${client} U128 pf=/usr/sap/trans/bin/TP_DOMAIN_${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]}.PFL")
+            ssh_commands+=("/usr/sap/${sid}/SYS/exe/run/tp IMPORT ${transport} ${sid} client=${client} U128 pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         "${SAPTRANSPORT_ACTION_DEL}" )
-            ssh_commands+=("/usr/sap/${SID}/SYS/exe/run/tp DELFROMBUFFER ${transport} ${SID} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]}.PFL")
+            ssh_commands+=("/usr/sap/${sid}/SYS/exe/run/tp DELFROMBUFFER ${transport} ${sid} client=${client} pf=/usr/sap/trans/bin/TP_DOMAIN_${domain_controller}.PFL")
         ;;
 
         * )
@@ -253,7 +299,23 @@ function saptransport::record_status() {
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Changing status to ${status} for ${transport}->${system}->${action}."
 
     # FIX: set status of current action as last thing to fix the race condition in saptransport::is_all_done()
-    echo "${status}" > "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+    echo -n "${status}" > "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+}
+
+function saptransport::read_status() {
+    local transport="${1}"
+    local system="${2}"
+    local action="${3}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   action=${action}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Loading status for ${transport}->${system}->${action}."
+
+    echo -n "$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
+        || tpcp::utils::terminate "Cannot load status for ${transport}->${system}->${action}"
 }
 
 function saptransport::is_all_done() {
@@ -268,7 +330,7 @@ function saptransport::is_all_done() {
         case "${status}" in
             # FIX: There was a race condition due to changing status is not an atomic operation.
             #      The status of subsequent action is changed first to fix thix.
-            "${SAPTRANSPORT_STATUS_RUNNING}" )
+            "${SAPTRANSPORT_STATUS_RUNNING}" | "${SAPTRANSPORT_STATUS_WAITING}" )
                 logger::log "${TPCP_CURRENT_LABEL}" "D" "Not yet done, status '${status}' is stored in '${status_filepath}'."
 
                 return 1
@@ -277,7 +339,7 @@ function saptransport::is_all_done() {
     done
 }
 
-function saptransport::__get_SID() {
+function saptransport::__get_sid() {
     local system="${1}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
@@ -286,7 +348,7 @@ function saptransport::__get_SID() {
     echo -n "${system:0:3}"
 }
 
-function saptransport::__get_SID_from_transport() {
+function saptransport::__get_sid_from_transport() {
     local transport="${1}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
@@ -305,21 +367,21 @@ function saptransport::__get_client() {
 }
 
 function saptransport::__get_system_group_name() {
-    local SID="${1}"
+    local sid="${1}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   SID=${SID}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
-    echo -n "${SID:0:2}"
+    echo -n "${sid:0:2}"
 }
 
 function saptransport::__get_system_group_role() {
-    local SID="${1}"
+    local sid="${1}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   SID=${SID}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
-    echo -n "${SID:2}"
+    echo -n "${sid:2}"
 }
 
 function saptransport::__get_transport_label() {
@@ -331,42 +393,74 @@ function saptransport::__get_transport_label() {
     echo -n "${transport:4}"
 }
 
-function saptransport::__is_transport_domain_cached() {
-    local SID="${1}"
+function saptransport::__cache_transport_domain_from_sid() {
+    local sid="${1}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   SID=${SID}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
-    if ! [[ ${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]+_} ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Transport domain for ${SID} isn't cached yet."
-
+    if ! saptransport::__cache_transport_domain "${sid}"; then
         return 1
     fi
+
+    return 0
+}
+
+function saptransport::cache_transport_domains() {
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   args=${*}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "I" "Caching all transport domains in parallel."
+
+    local sids=( $(saptransport::__make_sids_unique "${@}") )
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Optimized list of SID is '${sids[*]}'."
+
+    local sid
+
+    for sid in "${sids[@]}"; do
+        # cache transport domains in parallel
+        saptransport::__cache_transport_domain_from_sid "${sid}" &
+    done
+
+    wait
+
+    # load transport domains here so all background processes have full transport domains map
+    local cache_filepath
+
+    for cache_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_"*; do
+        local sid="${cache_filepath: -3}"
+
+        SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]="$( < "${cache_filepath}" )" \
+            || tpcp::utils::terminate "Cannot load domain controller from file '${cache_filepath}'."
+
+        # TODO: maybe cache domain controller here to prevent unnecessary reading from file in saptransport::__cache_transport_domain()
+    done
+
+    logger::log "${TPCP_CURRENT_LABEL}" "I" "Caching all transport domains has finished."
 }
 
 function saptransport::__cache_transport_domain() {
-    local SID="${1}"
-    local ssh_user="${2}"
-    local ssh_host="${3}"
-    local ssh_port="${4}"
+    local sid="${1}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   SID=${SID}"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   ssh_user=${ssh_user}"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   ssh_host=${ssh_host}"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   ssh_port=${ssh_port}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
-    if saptransport::__is_transport_domain_cached "${SID}"; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Transport domain for ${SID} found in cache."
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for ${sid}."
 
-        return 0
+    if ! saptransport::__hostname_exists "${sid}"; then
+        logger::log "${TPCP_CURRENT_LABEL}" "C" "Hostname for SID ${sid} not found."
+
+        return 1
     fi
 
-    logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for ${SID}."
+    local ssh_user="${sid,,}adm"
+    local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${sid}]}"
+    local ssh_port="22"
+    local ssh_command="egrep -x '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
+    local cache_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${sid}"
 
     local rc=0
-    local ssh_command="egrep -x '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
-    local cache_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${SID}"
 
     tpcp::ssh::run_command                      \
         "${ssh_user}"                           \
@@ -379,24 +473,84 @@ function saptransport::__cache_transport_domain() {
             || rc=1
 
     if [[ ${rc} -ne 0 ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "C" "Cannot get domain controller for ${SID} from ${ssh_user}@${ssh_host}:${ssh_port}."
+        logger::log "${TPCP_CURRENT_LABEL}" "C" "Cannot get domain controller for ${sid} from ${ssh_user}@${ssh_host}:${ssh_port}."
 
         return 1
     fi
 
-    SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${SID}]="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${SID}" )" \
-        || tpcp::utils::terminate "Cannot load domain controller from file '${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${SID}'."
+    local domain_controller="$( < "${cache_filepath}" )" \
+        || tpcp::utils::terminate "Cannot load domain controller from file '${cache_filepath}'."
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Transport domain for ${sid} is ${domain_controller}."
+
+    # cache domain controller as well
+    if [[ "${sid}" != "${domain_controller}" ]]; then
+        local cache_filepath_domain_controller="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${domain_controller}"
+
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for domain controller ${domain_controller}."
+
+        echo -n "${domain_controller}" > "${cache_filepath_domain_controller}"
+    fi
 }
 
 function saptransport::__hostname_exists() {
-    local SID="${1}"
+    local sid="${1}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   SID=${SID}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
-    if ! [[ ${SAPTRANSPORT_HOSTNAMES_MAP[${SID}]+_} ]]; then
+    if ! [[ ${SAPTRANSPORT_HOSTNAMES_MAP[${sid}]+_} ]]; then
         return 1
     fi
+}
+
+function saptransport::__get_system_from_requested_transport_domain() {
+    local domain_controller="${1}"
+    local system_list=("${@:2}") # assert: order of passed array stays always the same
+
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   domain_controller=${domain_controller}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   system_list=${system_list[*]}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Searching for system from requested transport domain ${domain_controller} (system_list=${system_list[*]})."
+
+    # doing it this way so it is cross-platform (egrep -o works only with GNU egrep)
+    local selected_system="$(echo -n "${system_list[@]}" | tr ' ' "\n" | egrep "^${domain_controller}[0-9]{3}\$" | head -n 1)" \
+        || logger::log "${TPCP_CURRENT_LABEL}" "E" "Searching for domain controller system for requested transport domain ${domain_controller} in system list failed."
+
+    # prefer domain controller
+    if [[ "${selected_system}" != "" ]]; then
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Found domain controller system ${selected_system} for requested transport domain ${domain_controller}."
+
+        echo -n "${selected_system}"
+
+        return 0
+    fi
+
+    # choose any system from the same transport domain
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Domain controller system from requested transport domain ${domain_controller} not found."
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Searching for any system from requested transport domain ${domain_controller}."
+
+    local system
+
+    for system in ${system_list[@]}; do
+        local sid_discovered="$(saptransport::__get_sid "${system}")"
+        local domain_controller_discovered="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid_discovered}]}"
+
+        if [[ "${domain_controller}" == "${domain_controller_discovered}" ]]; then
+            logger::log "${TPCP_CURRENT_LABEL}" "D" "Found system ${system} from requested transport domain ${domain_controller}."
+
+            echo -n "${system}"
+
+            return 0
+        fi
+
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "System ${system} is not from requested transport domain (requested=${domain_controller}, discovered=${domain_controller_discovered})."
+    done
+
+    logger::log "${TPCP_CURRENT_LABEL}" "E" "No system found for requested transport domain ${domain_controller}."
+
+    return 1
 }
 
 function saptransport::load_ini_file() {
@@ -432,12 +586,21 @@ function saptransport::load_ini_file() {
             tpcp::utils::terminate "Malformed ini file ${filepath}, line #${line_number} '${line}'."
         fi
 
-        local SID="${line%=*}"
+        local sid="${line%=*}"
         local hostname="${line#*=}"
 
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "SID=${SID}"
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "SID=${sid}"
         logger::log "${TPCP_CURRENT_LABEL}" "D" "hostname=${hostname}"
 
-        SAPTRANSPORT_HOSTNAMES_MAP[${SID}]="${hostname}"
+        SAPTRANSPORT_HOSTNAMES_MAP[${sid}]="${hostname}"
     done < "${filepath}"
+}
+
+function saptransport::__make_sids_unique() {
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   args=${*}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Removing duplicate SIDs from the list '${*}'."
+
+    echo -n "${@}" | tr ' ' "\n" | cut -c 1-3 | sort | uniq
 }

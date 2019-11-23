@@ -7,6 +7,7 @@ TPCP_RENDERER_SYMBOL_RUNNING="..."
 TPCP_RENDERER_SYMBOL_FINISHED="✔"
 TPCP_RENDERER_SYMBOL_FAILED="$(ansi --red --no-newline "✖")"
 TPCP_RENDERER_SYMBOL_SKIPPED="-"
+TPCP_RENDERER_SYMBOL_WAITING="w"
 
 function tpcp::renderer::render() {
     logger::log "${TPCP_CURRENT_LABEL}"  "T" "Running ${FUNCNAME}():"
@@ -58,9 +59,7 @@ function tpcp::renderer::render() {
             for action in "${IP_ACTION_LIST[@]}"; do
                 logger::log "${TPCP_CURRENT_LABEL}"  "T" "Rendering action result "${action}" for system ${system}."
 
-                # TODO: change to a function due to a filename structure
-                local status="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
-                    || tpcp::utils::terminate "Cannot load status for ${transport}->${system}->${action}"
+                local status="$(saptransport::read_status "${transport}" "${system}" "${action}")"
 
                 # this has to be 4 characters long
                 case "${status}" in
@@ -90,6 +89,12 @@ function tpcp::renderer::render() {
                     "${SAPTRANSPORT_STATUS_SKIPPED}" )
                         line+=" "                                #   indentation = 1 character
                         line+="${TPCP_RENDERER_SYMBOL_SKIPPED}"  # action result = 1 character
+                        line+="  "                               #   indentation = 2 characters
+                    ;;
+
+                    "${SAPTRANSPORT_STATUS_WAITING}" )
+                        line+=" "                                #   indentation = 1 character
+                        line+="${TPCP_RENDERER_SYMBOL_WAITING}"  # action result = 1 character
                         line+="  "                               #   indentation = 2 characters
                     ;;
 

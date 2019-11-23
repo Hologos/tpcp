@@ -29,6 +29,7 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
+TPCP_VERSION="<<VERSION>>"
 TPCP_CURRENT_LABEL="${LOGGER_GLOBAL_LABEL}"
 
 if [[ -z "${TPCP_LOG_DIRPATH_ROOT+_}" ]] || [[ "${TPCP_LOG_DIRPATH_ROOT}" == "" ]]; then
@@ -44,10 +45,20 @@ fi
 
 if logger::level_is_lower "${TPCP_LOGGER_LEVEL}" "D" || logger::level_is_equal "${TPCP_LOGGER_LEVEL}" "D"; then
     TPCP_LOG_DIRPATH="${TPCP_LOG_DIRPATH_ROOT}/debug"
+
+    # to prevent appending text to existing files and mixing files from different runs
+    if [[ -e "${TPCP_LOG_DIRPATH}" ]]; then
+        mv "${TPCP_LOG_DIRPATH}" "${TPCP_LOG_DIRPATH}.moved-on-$(date +'%Y%m%d-%H%M%S')" || { \
+            >&2 echo
+            >&2 ansi --bold --red "Aborting program to prevent mixing files from different runs. Cannot move ${TPCP_LOG_DIRPATH}."
+            exit 1
+        }
+    fi
 fi
 
 logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_DIRPATH}/main.log"
 
+logger::log "${TPCP_CURRENT_LABEL}" "I" "Running tpcp v${TPCP_VERSION}."
 logger::log "${TPCP_CURRENT_LABEL}" "I" "Program invoked as ${0} ${*}"
 
 # kill all background processes
@@ -96,6 +107,12 @@ for transport in "${IP_TRANSPORT_LIST[@]}"; do
         done
     done
 done
+
+echo
+echo "Caching information about transport domains."
+
+# cache transport domains in advance so all background processes have full transport domains map
+saptransport::cache_transport_domains "${IP_SYSTEM_LIST[@]}" "${IP_TRANSPORT_LIST[@]}"
 
 # process all transports on all systems
 for transport in "${IP_TRANSPORT_LIST[@]}"; do
