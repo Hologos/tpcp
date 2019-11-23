@@ -155,8 +155,6 @@ function saptransport::__run_action_on_system() {
 
                     case "${status}" in
                         "${SAPTRANSPORT_STATUS_FINISHED}" )
-                            logger::log "${TPCP_CURRENT_LABEL}" "N" "Waiting for transport copy to finish on selected system ${selected_system}."
-
                             break
                         ;;
 
