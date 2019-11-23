@@ -93,8 +93,6 @@ function saptransport::__run_action_on_system() {
 
     local sid="$(saptransport::__get_sid "${system}")"
     local client="$(saptransport::__get_client "${system}")"
-    local sg_name="$(saptransport::__get_system_group_name "${sid}")"
-    local sg_role="$(saptransport::__get_system_group_role "${sid}")"
     local transport_label="$(saptransport::__get_transport_label "${transport}")"
 
     if ! saptransport::__hostname_exists "${sid}"; then
