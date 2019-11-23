@@ -353,6 +353,8 @@ function saptransport::cache_transport_domains() {
 
     local sids=( $(saptransport::__make_sids_unique "${@}") )
 
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Optimized list of SID is '${sids[*]}'."
+
     local sid
 
     for sid in "${sids[@]}"; do
