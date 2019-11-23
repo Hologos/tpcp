@@ -346,14 +346,12 @@ function saptransport::__cache_transport_domain_from_sid() {
 }
 
 function saptransport::cache_transport_domains() {
-    local system_list=("${!1}")
-
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "   system_list=${system_list[*]}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   args=${*}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "I" "Caching all transport domains in parallel."
 
-    local sids=( $(saptransport::__make_sids_unique "${system_list[@]}") )
+    local sids=( $(saptransport::__make_sids_unique "${@}") )
 
     local sid
 

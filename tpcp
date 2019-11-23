@@ -112,7 +112,7 @@ echo
 echo "Caching information about transport domains."
 
 # cache transport domains in advance so all background processes have full transport domains map
-saptransport::cache_transport_domains "IP_SYSTEM_LIST[@]"
+saptransport::cache_transport_domains "${IP_SYSTEM_LIST[@]}"
 
 # process all transports on all systems
 for transport in "${IP_TRANSPORT_LIST[@]}"; do
