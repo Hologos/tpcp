@@ -355,10 +355,10 @@ function saptransport::cache_transport_domains() {
 
     local sids=( $(saptransport::__make_sids_unique "${system_list[@]}") )
 
-    # cache transport domains in parallel
     local sid
 
     for sid in "${sids[@]}"; do
+        # cache transport domains in parallel
         saptransport::__cache_transport_domain_from_sid "${sid}" &
     done
 
@@ -373,7 +373,7 @@ function saptransport::cache_transport_domains() {
         SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]="$( < "${cache_filepath}" )" \
             || tpcp::utils::terminate "Cannot load domain controller from file '${cache_filepath}'."
 
-        # TODO: maybe cache domain controller here to prevent reading from file in saptransport::__cache_transport_domain()
+        # TODO: maybe cache domain controller here to prevent unnecessary reading from file in saptransport::__cache_transport_domain()
     done
 
     logger::log "${TPCP_CURRENT_LABEL}" "I" "Caching all transport domains has finished."
