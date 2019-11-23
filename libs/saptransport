@@ -243,6 +243,22 @@ function saptransport::record_status() {
     echo -n "${status}" > "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
 }
 
+function saptransport::read_status() {
+    local transport="${1}"
+    local system="${2}"
+    local action="${3}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   action=${action}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Loading status for ${transport}->${system}->${action}."
+
+    echo -n "$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
+        || tpcp::utils::terminate "Cannot load status for ${transport}->${system}->${action}"
+}
+
 function saptransport::is_all_done() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"

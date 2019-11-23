@@ -58,9 +58,7 @@ function tpcp::renderer::render() {
             for action in "${IP_ACTION_LIST[@]}"; do
                 logger::log "${TPCP_CURRENT_LABEL}"  "T" "Rendering action result "${action}" for system ${system}."
 
-                # TODO: change to a function due to a filename structure
-                local status="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
-                    || tpcp::utils::terminate "Cannot load status for ${transport}->${system}->${action}"
+                local status="$(saptransport::read_status "${transport}" "${system}" "${action}")"
 
                 # this has to be 4 characters long
                 case "${status}" in
