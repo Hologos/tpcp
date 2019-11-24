@@ -99,7 +99,7 @@ function tpcp::renderer::render() {
                     ;;
 
                     *)
-                        tpcp::utils::terminate "Unknown status '${status}' for ${transport}->${system}->${action}."
+                        tpcp::utils::terminate "Unknown status of ${transport}->${system}->${action} is '${status}'."
                 esac
             done
 
