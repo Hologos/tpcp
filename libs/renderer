@@ -24,17 +24,18 @@ function tpcp::renderer::render_table() {
     ansi::hideCursor
 
     while : ; do
-        tpcp::renderer::__render_table
+        sleep 0.2
 
         # BUG: When job dies, its status doesn't change and this function will return false forever.
         if saptransport::is_all_done; then
-            sleep 1
-            tpcp::renderer::__render_table
             break
         fi
 
-        sleep 0.2
+        tpcp::renderer::__render_table
     done
+
+    # render the screen again to update the results
+    tpcp::renderer::__render_table
 
     # show cursor
     ansi::showCursor
