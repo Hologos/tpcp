@@ -9,7 +9,34 @@ TPCP_RENDERER_SYMBOL_FAILED="$(ansi --red --no-newline "✖")"
 TPCP_RENDERER_SYMBOL_SKIPPED="-"
 TPCP_RENDERER_SYMBOL_WAITING="w"
 
-function tpcp::renderer::render() {
+function tpcp::renderer::render_table() {
+    logger::log "${TPCP_CURRENT_LABEL}"  "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}"  "T" "   [no-params]"
+
+    # setup separate log file for renderer
+    TPCP_CURRENT_LABEL="RENDERER"
+
+    logger::init "${TPCP_CURRENT_LABEL}" "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_DIRPATH}/renderer.log"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "I" "Starting the renderer."
+
+    while : ; do
+        tpcp::renderer::__render_table
+
+        # BUG: When job dies, its status doesn't change and this function will return false forever.
+        if saptransport::is_all_done; then
+            sleep 1
+            tpcp::renderer::__render_table
+            break
+        fi
+
+        sleep 1
+    done
+
+    logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done. Stopping rendering."
+}
+
+function tpcp::renderer::__render_table() {
     logger::log "${TPCP_CURRENT_LABEL}"  "T" "Running ${FUNCNAME}():"
     logger::log "${TPCP_CURRENT_LABEL}"  "T" "   [no-params]"
 

@@ -121,27 +121,7 @@ done &
 
 sleep 1
 
-# setup separate log file for renderer
-TPCP_CURRENT_LABEL="RENDERER"
-
-logger::init "${TPCP_CURRENT_LABEL}" "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_DIRPATH}/renderer.log"
-
-logger::log "${TPCP_CURRENT_LABEL}" "I" "Starting the renderer."
-
-while : ; do
-    tpcp::renderer::render
-
-    # BUG: When job dies, its status doesn't change and this function will return false forever.
-    if saptransport::is_all_done; then
-        sleep 1
-        tpcp::renderer::render
-        break
-    fi
-
-    sleep 1
-done
-
-logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done. Stopping rendering."
+tpcp::renderer::render_table
 
 wait
 
