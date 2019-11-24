@@ -30,7 +30,7 @@ function tpcp::renderer::render_table() {
             break
         fi
 
-        sleep 1
+        sleep 0.2
     done
 
     logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done. Stopping rendering."
