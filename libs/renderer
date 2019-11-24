@@ -8,6 +8,7 @@ TPCP_RENDERER_SYMBOL_FINISHED="✔"
 TPCP_RENDERER_SYMBOL_FAILED="$(ansi --red --no-newline "✖")"
 TPCP_RENDERER_SYMBOL_SKIPPED="-"
 TPCP_RENDERER_SYMBOL_WAITING="\xe2\xa7\x97"
+TPCP_RENDERER_SYMBOL_UNKNOWN="\xef\xbf\xbd"
 
 function tpcp::renderer::render_table() {
     logger::log "${TPCP_CURRENT_LABEL}"  "T" "Running ${FUNCNAME}():"
@@ -135,7 +136,12 @@ function tpcp::renderer::__render_table() {
                     ;;
 
                     *)
-                        tpcp::utils::terminate "Unknown status of ${transport}->${system}->${action} is '${status}'."
+                        # do not terminate here because background processes will continue to run anyway
+                        logger::log "${TPCP_CURRENT_LABEL}" "E" "Unknown status of ${transport}->${system}->${action} is '${status}'."
+
+                        line+=" "                                #   indentation = 1 character
+                        line+="${TPCP_RENDERER_SYMBOL_UNKNOWN}"  # action result = 1 character
+                        line+="  "                               #   indentation = 2 characters
                 esac
             done
 
