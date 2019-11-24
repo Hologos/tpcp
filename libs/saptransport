@@ -317,7 +317,19 @@ function saptransport::read_status() {
     local status="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
         || tpcp::utils::terminate "Cannot load status for ${transport}->${system}->${action}."
 
-    echo -n "${status}"
+    case "${status}" in
+        "${SAPTRANSPORT_STATUS_INITIAL}"    | \
+        "${SAPTRANSPORT_STATUS_RUNNING}"    | \
+        "${SAPTRANSPORT_STATUS_FAILED}"     | \
+        "${SAPTRANSPORT_STATUS_FINISHED}"   | \
+        "${SAPTRANSPORT_STATUS_SKIPPED}"    | \
+        "${SAPTRANSPORT_STATUS_WAITING}"    )
+            echo -n "${status}"
+        ;;
+
+        *)
+            tpcp::utils::terminate "Unknown status '${status}' for ${transport}->${system}->${action}."
+    esac
 }
 
 function saptransport::is_all_done() {
