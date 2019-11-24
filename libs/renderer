@@ -20,6 +20,9 @@ function tpcp::renderer::render_table() {
 
     logger::log "${TPCP_CURRENT_LABEL}" "I" "Starting the renderer."
 
+    # prevent fast movement on the screen
+    ansi::hideCursor
+
     while : ; do
         tpcp::renderer::__render_table
 
@@ -32,6 +35,9 @@ function tpcp::renderer::render_table() {
 
         sleep 0.2
     done
+
+    # show cursor
+    ansi::showCursor
 
     logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done. Stopping rendering."
 }

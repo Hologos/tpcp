@@ -81,6 +81,8 @@ function tpcp::utils::exit_trap() {
     logger::log "T" "   [no-params]"
 
     tpcp::render::print_log_location
+
+    ansi::showCursor
 }
 
 function tpcp::utils::cleanup() {
