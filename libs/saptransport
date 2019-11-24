@@ -299,7 +299,8 @@ function saptransport::record_status() {
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Changing status of ${transport}->${system}->${action} to ${status}."
 
     # FIX: set status of current action as last thing to fix the race condition in saptransport::is_all_done()
-    echo -n "${status}" > "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+    echo -n "${status}" > "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" \
+        || tpcp::utils::terminate "Cannot record status of ${transport}->${system}->${action}."
 }
 
 function saptransport::read_status() {
