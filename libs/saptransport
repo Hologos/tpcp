@@ -317,6 +317,8 @@ function saptransport::read_status() {
     local status="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
         || tpcp::utils::terminate "Cannot load status of ${transport}->${system}->${action}."
 
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Status of ${transport}->${system}->${action} is '${status}'."
+
     case "${status}" in
         "${SAPTRANSPORT_STATUS_INITIAL}"    | \
         "${SAPTRANSPORT_STATUS_RUNNING}"    | \

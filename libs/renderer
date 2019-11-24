@@ -95,6 +95,8 @@ function tpcp::renderer::__render_table() {
 
                 local status="$(saptransport::read_status "${transport}" "${system}" "${action}")"
 
+                logger::log "${TPCP_CURRENT_LABEL}"  "D" "Rendering status '${status}' of ${transport}->${system}->${action}."
+
                 # this has to be 4 characters long
                 case "${status}" in
                     "${SAPTRANSPORT_STATUS_INITIAL}" )
