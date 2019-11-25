@@ -44,7 +44,7 @@ function tpcp::utils::terminate() {
 
         # also print to STDERR
         >&2 echo
-        >&2 echo "The program has been terminated due to a critical error:"
+        >&2 ansi --bold --red "The program has been terminated due to a critical error:"
         >&2 echo "${message}"
 
         logger::log "${TPCP_CURRENT_LABEL}" "C" "${message}"
