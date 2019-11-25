@@ -3,7 +3,7 @@
 TPCP_RENDERER_ALREADY_RENDERED=0
 
 TPCP_RENDERER_SYMBOL_INITIAL=" "
-TPCP_RENDERER_SYMBOL_RUNNING="..."
+TPCP_RENDERER_SYMBOL_RUNNING="."
 TPCP_RENDERER_SYMBOL_FINISHED="✔"
 TPCP_RENDERER_SYMBOL_FAILED="$(ansi --red --no-newline "✖")"
 TPCP_RENDERER_SYMBOL_SKIPPED="-"
@@ -43,6 +43,10 @@ function tpcp::renderer::render_table() {
 
     logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done. Stopping rendering."
 }
+
+running_status_current_length=0
+running_status_max_length=3
+running_status_indeces="$(seq 0 ${running_status_max_length})"
 
 function tpcp::renderer::__render_table() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
@@ -107,7 +111,16 @@ function tpcp::renderer::__render_table() {
                     ;;
 
                     "${SAPTRANSPORT_STATUS_RUNNING}" )
-                        line+="${TPCP_RENDERER_SYMBOL_RUNNING}"  # action result = 3 characters
+                        local i=0
+
+                        for i in ${running_status_indeces}; do   # action result = 3 characters
+                            if [[ ${i} -le ${running_status_current_length} ]]; then
+                                line+="${TPCP_RENDERER_SYMBOL_RUNNING}"
+                            else
+                                line+=" "
+                            fi
+                        done
+
                         line+=" "                                #   indentation = 1 character
                     ;;
 
@@ -148,6 +161,8 @@ function tpcp::renderer::__render_table() {
             echo -e "${line}"
         done
     done
+
+    running_status_current_length=$(( (${running_status_current_length} + 1) % ${running_status_max_length} ))
 
     TPCP_RENDERER_ALREADY_RENDERED=1
 }
