@@ -18,6 +18,7 @@ SAPTRANSPORT_STATUS_WAITING="WAITING"
 SAPTRANSPORT_STATUS_FILENAME_PART="saptransport_status"
 SAPTRANSPORT_ABORT_FILENAME="saptransport_abort"
 SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART="saptransport_domain_controller"
+SAPTRANSPORT_DOMAIN_CONTROLLER_ABORT_FILENAME="saptransport_domain_controller_abort"
 
 function saptransport::process_transport() {
     local transport="${1}"
@@ -296,10 +297,17 @@ function saptransport::record_status() {
         tpcp::utils::terminate "Action '${action}' was not found, cannot change status of subsequest action(s)."
     fi
 
-    logger::log "${TPCP_CURRENT_LABEL}" "D" "Changing status to ${status} for ${transport}->${system}->${action}."
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Changing status of ${transport}->${system}->${action} to ${status}."
+
+    local filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+    local filepath_tmp="${filepath}.tmp"
 
     # FIX: set status of current action as last thing to fix the race condition in saptransport::is_all_done()
-    echo -n "${status}" > "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+    echo -n "${status}" > "${filepath_tmp}" \
+        || tpcp::utils::terminate "Cannot record status of ${transport}->${system}->${action} to ${filepath_tmp}."
+
+    mv "${filepath_tmp}" "${filepath}" \
+        || tpcp::utils::terminate "Cannot replace ${filepath} with ${filepath_tmp}."
 }
 
 function saptransport::read_status() {
@@ -312,10 +320,26 @@ function saptransport::read_status() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   action=${action}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "D" "Loading status for ${transport}->${system}->${action}."
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Loading status of ${transport}->${system}->${action}."
 
-    echo -n "$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
-        || tpcp::utils::terminate "Cannot load status for ${transport}->${system}->${action}"
+    local status="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
+        || tpcp::utils::terminate "Cannot load status of ${transport}->${system}->${action}."
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Status of ${transport}->${system}->${action} is '${status}'."
+
+    case "${status}" in
+        "${SAPTRANSPORT_STATUS_INITIAL}"    | \
+        "${SAPTRANSPORT_STATUS_RUNNING}"    | \
+        "${SAPTRANSPORT_STATUS_FAILED}"     | \
+        "${SAPTRANSPORT_STATUS_FINISHED}"   | \
+        "${SAPTRANSPORT_STATUS_SKIPPED}"    | \
+        "${SAPTRANSPORT_STATUS_WAITING}"    )
+            echo -n "${status}"
+        ;;
+
+        *)
+            tpcp::utils::terminate "Unknown status of ${transport}->${system}->${action} is '${status}'."
+    esac
 }
 
 function saptransport::is_all_done() {
@@ -325,6 +349,11 @@ function saptransport::is_all_done() {
     local status_filepath
 
     for status_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}."*; do
+        # prevents reading tmp status file
+        if [[ "${status_filepath}" =~ \.tmp$ ]]; then
+            continue
+        fi
+
         local status="$( < "${status_filepath}" )" || tpcp::utils::terminate "Cannot load status from file '${status_filepath}'."
 
         case "${status}" in
@@ -400,6 +429,12 @@ function saptransport::__cache_transport_domain_from_sid() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
     if ! saptransport::__cache_transport_domain "${sid}"; then
+        local filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_ABORT_FILENAME}"
+
+        # creates signal file to abort
+        touch "${filepath}" \
+            || tpcp::utils::terminate "Cannot create signal file '${filepath}'."
+
         return 1
     fi
 
@@ -425,10 +460,14 @@ function saptransport::cache_transport_domains() {
 
     wait
 
+    if [[ -e "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_ABORT_FILENAME}" ]]; then
+        tpcp::utils::terminate "Could not cache all domain controllers."
+    fi
+
     # load transport domains here so all background processes have full transport domains map
     local cache_filepath
 
-    for cache_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_"*; do
+    for cache_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}."*; do
         local sid="${cache_filepath: -3}"
 
         SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]="$( < "${cache_filepath}" )" \
@@ -458,7 +497,7 @@ function saptransport::__cache_transport_domain() {
     local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${sid}]}"
     local ssh_port="22"
     local ssh_command="egrep -x '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
-    local cache_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${sid}"
+    local cache_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}.${sid}"
 
     local rc=0
 
@@ -485,7 +524,7 @@ function saptransport::__cache_transport_domain() {
 
     # cache domain controller as well
     if [[ "${sid}" != "${domain_controller}" ]]; then
-        local cache_filepath_domain_controller="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${domain_controller}"
+        local cache_filepath_domain_controller="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}.${domain_controller}"
 
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for domain controller ${domain_controller}."
 

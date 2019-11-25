@@ -70,6 +70,10 @@ function tpcp::inputparser::parse_input() {
         shift
     done
 
+    if [[ "${mode}" != "${MODE_ACTION}" ]]; then
+        tpcp::utils::terminate "Not all mandatory parameters were given."
+    fi
+
     if tpcp::utils::contains_duplicates "${IP_TRANSPORT_LIST[*]}"; then
         tpcp::utils::terminate "Transport list cannot have duplicates."
     fi
