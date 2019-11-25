@@ -298,8 +298,15 @@ function saptransport::record_status() {
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Changing status of ${transport}->${system}->${action} to ${status}."
 
+    local filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+    local filepath_tmp="${filepath}.tmp"
+
     # FIX: set status of current action as last thing to fix the race condition in saptransport::is_all_done()
-    echo -n "${status}" > "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}"
+    echo -n "${status}" > "${filepath_tmp}" \
+        || tpcp::utils::terminate "Cannot record status of ${transport}->${system}->${action} to ${filepath_tmp}."
+
+    mv "${filepath_tmp}" "${filepath}" \
+        || tpcp::utils::terminate "Cannot replace ${filepath} with ${filepath_tmp}."
 }
 
 function saptransport::read_status() {
@@ -316,6 +323,8 @@ function saptransport::read_status() {
 
     local status="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
         || tpcp::utils::terminate "Cannot load status of ${transport}->${system}->${action}."
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Status of ${transport}->${system}->${action} is '${status}'."
 
     case "${status}" in
         "${SAPTRANSPORT_STATUS_INITIAL}"    | \
@@ -339,6 +348,11 @@ function saptransport::is_all_done() {
     local status_filepath
 
     for status_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}."*; do
+        # prevents reading tmp status file
+        if [[ "${status_filepath}" =~ \.tmp$ ]]; then
+            continue
+        fi
+
         local status="$( < "${status_filepath}" )" || tpcp::utils::terminate "Cannot load status from file '${status_filepath}'."
 
         case "${status}" in

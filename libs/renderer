@@ -3,22 +3,61 @@
 TPCP_RENDERER_ALREADY_RENDERED=0
 
 TPCP_RENDERER_SYMBOL_INITIAL=" "
-TPCP_RENDERER_SYMBOL_RUNNING="..."
+TPCP_RENDERER_SYMBOL_RUNNING="."
 TPCP_RENDERER_SYMBOL_FINISHED="✔"
 TPCP_RENDERER_SYMBOL_FAILED="$(ansi --red --no-newline "✖")"
 TPCP_RENDERER_SYMBOL_SKIPPED="-"
-TPCP_RENDERER_SYMBOL_WAITING="w"
+TPCP_RENDERER_SYMBOL_WAITING="\xe2\xa7\x97"
+TPCP_RENDERER_SYMBOL_UNKNOWN="\xef\xbf\xbd"
 
-function tpcp::renderer::render() {
-    logger::log "${TPCP_CURRENT_LABEL}"  "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}"  "T" "   [no-params]"
+function tpcp::renderer::render_table() {
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
+
+    # setup separate log file for renderer
+    TPCP_CURRENT_LABEL="RENDERER"
+
+    logger::init "${TPCP_CURRENT_LABEL}" "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_DIRPATH}/renderer.log"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "I" "Starting the renderer."
+
+    # prevent fast movement on the screen
+    ansi::hideCursor
+
+    while : ; do
+        sleep 0.2
+
+        # BUG: When job dies, its status doesn't change and this function will return false forever.
+        if saptransport::is_all_done; then
+            break
+        fi
+
+        tpcp::renderer::__render_table
+    done
+
+    # render the screen again to update the results
+    tpcp::renderer::__render_table
+
+    # show cursor
+    ansi::showCursor
+
+    logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done. Stopping rendering."
+}
+
+running_status_current_length=0
+running_status_max_length=3
+running_status_indeces="$(seq 0 ${running_status_max_length})"
+
+function tpcp::renderer::__render_table() {
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     tpcp::renderer::__clear_previous_output "${#IP_TRANSPORT_LIST[@]}" "${#IP_SYSTEM_LIST[@]}"
 
     local transport=""
 
     for transport in "${IP_TRANSPORT_LIST[@]}"; do
-        logger::log "${TPCP_CURRENT_LABEL}"  "T" "Rendering output for transport ${transport}."
+        logger::log "${TPCP_CURRENT_LABEL}" "T" "Rendering output for transport ${transport}."
 
         local line=""
 
@@ -41,7 +80,7 @@ function tpcp::renderer::render() {
         local system_index=0
 
         for system in "${IP_SYSTEM_LIST[@]}"; do
-            logger::log "${TPCP_CURRENT_LABEL}"  "T" "Rendering action results for system ${system}."
+            logger::log "${TPCP_CURRENT_LABEL}" "T" "Rendering action results for system ${system}."
 
             system_index=$(( ${system_index} + 1 ))
             line=""
@@ -57,9 +96,11 @@ function tpcp::renderer::render() {
             line+="     "     # indentation = 5 characters
 
             for action in "${IP_ACTION_LIST[@]}"; do
-                logger::log "${TPCP_CURRENT_LABEL}"  "T" "Rendering action result "${action}" for system ${system}."
+                logger::log "${TPCP_CURRENT_LABEL}" "T" "Rendering action result "${action}" for system ${system}."
 
                 local status="$(saptransport::read_status "${transport}" "${system}" "${action}")"
+
+                logger::log "${TPCP_CURRENT_LABEL}" "D" "Rendering status '${status}' of ${transport}->${system}->${action}."
 
                 # this has to be 4 characters long
                 case "${status}" in
@@ -70,7 +111,16 @@ function tpcp::renderer::render() {
                     ;;
 
                     "${SAPTRANSPORT_STATUS_RUNNING}" )
-                        line+="${TPCP_RENDERER_SYMBOL_RUNNING}"  # action result = 3 characters
+                        local i=0
+
+                        for i in ${running_status_indeces}; do   # action result = 3 characters
+                            if [[ ${i} -le ${running_status_current_length} ]]; then
+                                line+="${TPCP_RENDERER_SYMBOL_RUNNING}"
+                            else
+                                line+=" "
+                            fi
+                        done
+
                         line+=" "                                #   indentation = 1 character
                     ;;
 
@@ -99,13 +149,20 @@ function tpcp::renderer::render() {
                     ;;
 
                     *)
-                        tpcp::utils::terminate "Unknown status of ${transport}->${system}->${action} is '${status}'."
+                        # do not terminate here because background processes will continue to run anyway
+                        logger::log "${TPCP_CURRENT_LABEL}" "E" "Unknown status of ${transport}->${system}->${action} is '${status}'."
+
+                        line+=" "                                #   indentation = 1 character
+                        line+="${TPCP_RENDERER_SYMBOL_UNKNOWN}"  # action result = 1 character
+                        line+="  "                               #   indentation = 2 characters
                 esac
             done
 
-            echo "${line}"
+            echo -e "${line}"
         done
     done
+
+    running_status_current_length=$(( (${running_status_current_length} + 1) % ${running_status_max_length} ))
 
     TPCP_RENDERER_ALREADY_RENDERED=1
 }
@@ -114,9 +171,9 @@ function tpcp::renderer::__clear_previous_output() {
     local number_of_transports="${1}"
     local number_of_systems="${2}"
 
-    logger::log "${TPCP_CURRENT_LABEL}"  "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}"  "T" "   number_of_transports=${number_of_transports}"
-    logger::log "${TPCP_CURRENT_LABEL}"  "T" "   number_of_systems=${number_of_systems}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   number_of_transports=${number_of_transports}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   number_of_systems=${number_of_systems}"
 
     # 1st line: empty
     # 2nd line: actions
@@ -125,7 +182,7 @@ function tpcp::renderer::__clear_previous_output() {
     # repeats for every transport
     local number_of_lines=$(( (1 + 1 + ${number_of_systems} ) * ${number_of_transports} ))
 
-    logger::log "${TPCP_CURRENT_LABEL}"  "T" "Total number of rendered lines is ${number_of_lines}."
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Total number of rendered lines is ${number_of_lines}."
 
     # prepares 'canvas' for the output
     if [[ ${TPCP_RENDERER_ALREADY_RENDERED} -eq 0 ]]; then
@@ -142,8 +199,8 @@ function tpcp::renderer::__clear_previous_output() {
 }
 
 function tpcp::render::print_log_location() {
-    logger::log "${TPCP_CURRENT_LABEL}"  "T" "Running ${FUNCNAME}():"
-    logger::log "${TPCP_CURRENT_LABEL}"  "T" "   [no-params]"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     echo
     echo "Logs are located at ${TPCP_LOG_DIRPATH}."
