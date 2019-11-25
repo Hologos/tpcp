@@ -18,6 +18,7 @@ SAPTRANSPORT_STATUS_WAITING="WAITING"
 SAPTRANSPORT_STATUS_FILENAME_PART="saptransport_status"
 SAPTRANSPORT_ABORT_FILENAME="saptransport_abort"
 SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART="saptransport_domain_controller"
+SAPTRANSPORT_DOMAIN_CONTROLLER_ABORT_FILENAME="saptransport_domain_controller_abort"
 
 function saptransport::process_transport() {
     local transport="${1}"
@@ -428,6 +429,12 @@ function saptransport::__cache_transport_domain_from_sid() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
     if ! saptransport::__cache_transport_domain "${sid}"; then
+        local filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_ABORT_FILENAME}"
+
+        # creates signal file to abort
+        touch "${filepath}" \
+            || tpcp::utils::terminate "Cannot create signal file '${filepath}'."
+
         return 1
     fi
 
@@ -452,6 +459,10 @@ function saptransport::cache_transport_domains() {
     done
 
     wait
+
+    if [[ -e "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_ABORT_FILENAME}" ]]; then
+        tpcp::utils::terminate "Could not cache all domain controllers."
+    fi
 
     # load transport domains here so all background processes have full transport domains map
     local cache_filepath
