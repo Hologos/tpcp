@@ -456,7 +456,7 @@ function saptransport::cache_transport_domains() {
     # load transport domains here so all background processes have full transport domains map
     local cache_filepath
 
-    for cache_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_"*; do
+    for cache_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}."*; do
         local sid="${cache_filepath: -3}"
 
         SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]="$( < "${cache_filepath}" )" \
@@ -486,7 +486,7 @@ function saptransport::__cache_transport_domain() {
     local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${sid}]}"
     local ssh_port="22"
     local ssh_command="egrep -x '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
-    local cache_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${sid}"
+    local cache_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}.${sid}"
 
     local rc=0
 
@@ -513,7 +513,7 @@ function saptransport::__cache_transport_domain() {
 
     # cache domain controller as well
     if [[ "${sid}" != "${domain_controller}" ]]; then
-        local cache_filepath_domain_controller="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}_${domain_controller}"
+        local cache_filepath_domain_controller="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}.${domain_controller}"
 
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for domain controller ${domain_controller}."
 
