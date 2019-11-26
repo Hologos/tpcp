@@ -100,7 +100,7 @@ function tpcp::utils::capture_stdout() {
 
     local msg=""
 
-    while read msg; do
+    while read -r msg; do
         logger::log "${TPCP_CURRENT_LABEL}" "I" "${msg}"
     done
 }
@@ -111,7 +111,7 @@ function tpcp::utils::capture_stderr() {
 
     local msg=""
 
-    while read msg; do
+    while read -r msg; do
         logger::log "${TPCP_CURRENT_LABEL}" "W" "${msg}"
     done
 }

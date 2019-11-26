@@ -626,7 +626,7 @@ function saptransport::load_ini_file() {
     local line=""
     local line_number=0
 
-    while read line; do
+    while read -r line; do
         line_number="$(( line_number + 1 ))"
 
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Reading line #${line_number} '${line}'."
