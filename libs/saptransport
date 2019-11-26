@@ -19,6 +19,7 @@ readonly SAPTRANSPORT_STATUS_FILENAME_PART="saptransport_status"
 readonly SAPTRANSPORT_ABORT_FILENAME="saptransport_abort"
 readonly SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART="saptransport_domain_controller"
 readonly SAPTRANSPORT_DOMAIN_CONTROLLER_ABORT_FILENAME="saptransport_domain_controller_abort"
+readonly SAPTRANSPORT_NOT_FINISHED="saptransport_not_finished"
 
 function saptransport::process_transport() {
     local transport="${1}"
@@ -39,6 +40,11 @@ function saptransport::process_transport() {
     done
 
     wait
+
+    local not_yet_started_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_NOT_FINISHED}"
+
+    rm -f "${not_yet_started_filepath}" \
+        || tpcp::utils::terminate "Cannot remove file ${not_yet_started_filepath}."
 }
 
 function saptransport::__run_actions_on_system() {
@@ -150,7 +156,7 @@ function saptransport::__run_action_on_system() {
                 saptransport::record_status "${SAPTRANSPORT_STATUS_WAITING}" "${transport}" "${system}" "${action}"
 
                 while : ; do
-                    sleep 1
+                    sleep 0.2
 
                     local status="$(saptransport::read_status "${transport}" "${selected_system}" "${action}")"
 
@@ -342,30 +348,43 @@ function saptransport::read_status() {
     esac
 }
 
+function saptransport::initialize_statuses() {
+    local transport_list=("${!1}")
+    local system_list=("${!2}")
+    local action_list=("${!3}")
+
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport_list=${transport_list[*]}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   system_list=${system_list[*]}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   action_list=${action_list[*]}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Initializing all statuses."
+
+    local not_yet_started_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_NOT_FINISHED}"
+
+    touch "${not_yet_started_filepath}" \
+        || tpcp::utils::terminate "Cannot create file ${not_yet_started_filepath}."
+
+    for transport in "${transport_list[@]}"; do
+        for system in "${system_list[@]}"; do
+            for action in "${action_list[@]}"; do
+                saptransport::record_status "${SAPTRANSPORT_STATUS_INITIAL}" "${transport}" "${system}" "${action}"
+            done
+        done
+    done
+}
+
 function saptransport::is_all_done() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
-    local status_filepath
+    local not_yet_started_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_NOT_FINISHED}"
 
-    for status_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}."*; do
-        # prevents reading tmp status file
-        if [[ "${status_filepath}" =~ \.tmp$ ]]; then
-            continue
-        fi
+    if [[ -e "${not_yet_started_filepath}" ]]; then
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Not yet done, mark file exists ${not_yet_started_filepath}."
 
-        local status="$( < "${status_filepath}" )" || tpcp::utils::terminate "Cannot load status from file '${status_filepath}'."
-
-        case "${status}" in
-            # FIX: There was a race condition due to changing status is not an atomic operation.
-            #      The status of subsequent action is changed first to fix thix.
-            "${SAPTRANSPORT_STATUS_RUNNING}" | "${SAPTRANSPORT_STATUS_WAITING}" )
-                logger::log "${TPCP_CURRENT_LABEL}" "D" "Not yet done, status '${status}' is stored in '${status_filepath}'."
-
-                return 1
-            ;;
-        esac
-    done
+        return 1
+    fi
 }
 
 function saptransport::__get_sid() {
