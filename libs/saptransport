@@ -515,7 +515,7 @@ function saptransport::__cache_transport_domain() {
     local ssh_user="${sid,,}adm"
     local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${sid}]}"
     local ssh_port="22"
-    local ssh_command="egrep -x '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
+    local ssh_command="grep -E -x '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
     local cache_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}.${sid}"
 
     local rc=0
@@ -572,8 +572,8 @@ function saptransport::__get_system_from_requested_transport_domain() {
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Searching for system from requested transport domain ${domain_controller} (system_list=${system_list[*]})."
 
-    # doing it this way so it is cross-platform (egrep -o works only with GNU egrep)
-    local selected_system="$(echo -n "${system_list[@]}" | tr ' ' "\n" | egrep "^${domain_controller}[0-9]{3}\$" | head -n 1)" \
+    # doing it this way so it is cross-platform (grep -o works only with GNU grep)
+    local selected_system="$(echo -n "${system_list[@]}" | tr ' ' "\n" | grep -E "^${domain_controller}[0-9]{3}\$" | head -n 1)" \
         || logger::log "${TPCP_CURRENT_LABEL}" "E" "Searching for domain controller system for requested transport domain ${domain_controller} in system list failed."
 
     # prefer domain controller
