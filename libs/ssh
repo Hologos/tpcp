@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 # TODO: save to process workdir
-SSH_MASTER_CONTROL_SOCKET_FILEPATH="/tmp/ssh-master-control-%r@%h:%p"
+readonly SSH_MASTER_CONTROL_SOCKET_FILEPATH="/tmp/ssh-master-control-%r@%h:%p"
 
 function tpcp::ssh::__close_master_connection() {
     local user="${1}"

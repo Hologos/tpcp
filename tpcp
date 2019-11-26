@@ -29,7 +29,8 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
-TPCP_VERSION="<<VERSION>>"
+readonly TPCP_VERSION="<<VERSION>>"
+
 TPCP_CURRENT_LABEL="${LOGGER_GLOBAL_LABEL}"
 
 if [[ -z "${TPCP_LOG_DIRPATH_ROOT+_}" ]] || [[ "${TPCP_LOG_DIRPATH_ROOT}" == "" ]]; then
@@ -93,7 +94,7 @@ echo "Loading system informations from ${TPCP_CONFIG_FILEPATH}."
 
 saptransport::load_ini_file "${TPCP_CONFIG_FILEPATH}"
 
-TPCP_WORK_DIRPATH="/tmp/tpcp.$(date +'%Y%m%d-%H%M%S').${RANDOM}.${$}"
+readonly TPCP_WORK_DIRPATH="/tmp/tpcp.$(date +'%Y%m%d-%H%M%S').${RANDOM}.${$}"
 
 if [[ ! -d "${TPCP_WORK_DIRPATH}" ]]; then
     mkdir "${TPCP_WORK_DIRPATH}" || tpcp::utils::terminate "Cannot create work directory ${TPCP_WORK_DIRPATH}."
