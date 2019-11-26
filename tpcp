@@ -20,12 +20,25 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 
 # -- load libraries -----------------------------------------------------------
 
+# shellcheck source=vendor/fidian/ansi/ansi
 . "${ABSOLUTE_DIRPATH}/vendor/fidian/ansi/ansi"
+
+# shellcheck source=vendor/hologos/logger/logger
 . "${ABSOLUTE_DIRPATH}/vendor/hologos/logger/logger"
+
+# shellcheck source=libs/inputparser
 . "${ABSOLUTE_DIRPATH}/libs/inputparser"
+
+# shellcheck source=libs/utils
 . "${ABSOLUTE_DIRPATH}/libs/utils"
+
+# shellcheck source=libs/ssh
 . "${ABSOLUTE_DIRPATH}/libs/ssh"
+
+# shellcheck source=libs/saptransport
 . "${ABSOLUTE_DIRPATH}/libs/saptransport"
+
+# shellcheck source=libs/renderer
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
