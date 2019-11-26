@@ -99,20 +99,14 @@ if [[ ! -d "${TPCP_WORK_DIRPATH}" ]]; then
     mkdir "${TPCP_WORK_DIRPATH}" || tpcp::utils::terminate "Cannot create work directory ${TPCP_WORK_DIRPATH}."
 fi
 
-# record initial status
-for transport in "${IP_TRANSPORT_LIST[@]}"; do
-    for system in "${IP_SYSTEM_LIST[@]}"; do
-        for action in "${IP_ACTION_LIST[@]}"; do
-            saptransport::record_status "${SAPTRANSPORT_STATUS_INITIAL}" "${transport}" "${system}" "${action}"
-        done
-    done
-done
-
 echo
 echo "Caching information about transport domains."
 
 # cache transport domains in advance so all background processes have full transport domains map
 saptransport::cache_transport_domains "${IP_SYSTEM_LIST[@]}" "${IP_TRANSPORT_LIST[@]}"
+
+# initialize all statuses
+saptransport::initialize_statuses "IP_TRANSPORT_LIST[@]" "IP_SYSTEM_LIST[@]" "IP_ACTION_LIST[@]" # hack to pass 3 arrays as argument
 
 # process all transports on all systems
 for transport in "${IP_TRANSPORT_LIST[@]}"; do

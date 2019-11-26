@@ -342,6 +342,27 @@ function saptransport::read_status() {
     esac
 }
 
+function saptransport::initialize_statuses() {
+    local transport_list=("${!1}")
+    local system_list=("${!2}")
+    local action_list=("${!3}")
+
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport_list=${transport_list[*]}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   system_list=${system_list[*]}"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "   action_list=${action_list[*]}"
+
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Initializing all statuses."
+
+    for transport in "${transport_list[@]}"; do
+        for system in "${system_list[@]}"; do
+            for action in "${action_list[@]}"; do
+                saptransport::record_status "${SAPTRANSPORT_STATUS_INITIAL}" "${transport}" "${system}" "${action}"
+            done
+        done
+    done
+}
+
 function saptransport::is_all_done() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
