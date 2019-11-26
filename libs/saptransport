@@ -466,7 +466,9 @@ function saptransport::cache_transport_domains() {
 
     logger::log "${TPCP_CURRENT_LABEL}" "I" "Caching all transport domains in parallel."
 
-    local sids=( $(saptransport::__make_sids_unique "${@}") )
+    local sids
+
+    mapfile -t sids < <(saptransport::__make_sids_unique "${@}")
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Optimized list of SID is '${sids[*]}'."
 
