@@ -81,7 +81,7 @@ if [[ ${#} -eq 0 ]]; then
     tpcp::utils::terminate
 fi
 
-tpcp::inputparser::parse_input ${@}
+tpcp::inputparser::parse_input "${@}"
 
 # -- main program -------------------------------------------------------------
 
