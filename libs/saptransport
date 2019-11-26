@@ -156,7 +156,7 @@ function saptransport::__run_action_on_system() {
                 saptransport::record_status "${SAPTRANSPORT_STATUS_WAITING}" "${transport}" "${system}" "${action}"
 
                 while : ; do
-                    sleep 1
+                    sleep 0.2
 
                     local status="$(saptransport::read_status "${transport}" "${selected_system}" "${action}")"
 
