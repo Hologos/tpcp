@@ -1,4 +1,4 @@
-# tpcp
+# tpcp [![Build Status](https://travis-ci.org/Hologos/tpcp.svg?branch=master)](https://travis-ci.org/Hologos/tpcp)
 
 A tool to remotely work with SAP import queue and transports.
 
