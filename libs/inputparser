@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 function tpcp::inputparser::parse_input() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   input=${*}"
 
     local MODE_TRANSPORT="transport"
@@ -90,7 +90,7 @@ function tpcp::inputparser::parse_input() {
 function tpcp::inputparser::is_transport() {
     local transport="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
 
     if [[ "${transport}" =~ ^[A-Z0-9]{3}K[A-Z0-9]{6}$ ]]; then
@@ -105,7 +105,7 @@ function tpcp::inputparser::is_transport() {
 function tpcp::inputparser::is_system() {
     local system="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
 
     if [[ "${system}" =~ ^[A-Z0-9]{3}[0-9]{3}$ ]]; then
@@ -120,7 +120,7 @@ function tpcp::inputparser::is_system() {
 function tpcp::inputparser::is_action() {
     local action="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   action=${action}"
 
     if [[ "${action}" =~ ^(${SAPTRANSPORT_ACTION_CPY}|${SAPTRANSPORT_ACTION_ADD}|${SAPTRANSPORT_ACTION_IMP}|${SAPTRANSPORT_ACTION_DEL})$ ]]; then

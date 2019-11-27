@@ -1,14 +1,14 @@
 #! /usr/bin/env bash
 
 # TODO: save to process workdir
-SSH_MASTER_CONTROL_SOCKET_FILEPATH="/tmp/ssh-master-control-%r@%h:%p"
+readonly SSH_MASTER_CONTROL_SOCKET_FILEPATH="/tmp/ssh-master-control-%r@%h:%p"
 
 function tpcp::ssh::__close_master_connection() {
     local user="${1}"
     local host="${2}"
     local port="${3}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   user=${user}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   host=${host}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   port=${port}"
@@ -43,7 +43,7 @@ function tpcp::ssh::__is_master_connection_alive() {
     local host="${2}"
     local port="${3}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   user=${user}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   host=${host}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   port=${port}"
@@ -76,7 +76,7 @@ function tpcp::ssh::__create_master_connection() {
     local host="${2}"
     local port="${3}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   user=${user}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   host=${host}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   port=${port}"
@@ -116,7 +116,7 @@ function tpcp::ssh::__create_master_connection() {
 }
 
 function tpcp::ssh::run_command() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
 
     local rc_threshold=0
 

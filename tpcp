@@ -20,16 +20,30 @@ ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
 
 # -- load libraries -----------------------------------------------------------
 
+# shellcheck source=vendor/fidian/ansi/ansi
 . "${ABSOLUTE_DIRPATH}/vendor/fidian/ansi/ansi"
+
+# shellcheck source=vendor/hologos/logger/logger
 . "${ABSOLUTE_DIRPATH}/vendor/hologos/logger/logger"
+
+# shellcheck source=libs/inputparser
 . "${ABSOLUTE_DIRPATH}/libs/inputparser"
+
+# shellcheck source=libs/utils
 . "${ABSOLUTE_DIRPATH}/libs/utils"
+
+# shellcheck source=libs/ssh
 . "${ABSOLUTE_DIRPATH}/libs/ssh"
+
+# shellcheck source=libs/saptransport
 . "${ABSOLUTE_DIRPATH}/libs/saptransport"
+
+# shellcheck source=libs/renderer
 . "${ABSOLUTE_DIRPATH}/libs/renderer"
 
 # -- initial setup ------------------------------------------------------------
-TPCP_VERSION="<<VERSION>>"
+readonly TPCP_VERSION="<<VERSION>>"
+
 TPCP_CURRENT_LABEL="${LOGGER_GLOBAL_LABEL}"
 
 if [[ -z "${TPCP_LOG_DIRPATH_ROOT+_}" ]] || [[ "${TPCP_LOG_DIRPATH_ROOT}" == "" ]]; then
@@ -80,7 +94,7 @@ if [[ ${#} -eq 0 ]]; then
     tpcp::utils::terminate
 fi
 
-tpcp::inputparser::parse_input ${@}
+tpcp::inputparser::parse_input "${@}"
 
 # -- main program -------------------------------------------------------------
 
@@ -93,20 +107,11 @@ echo "Loading system informations from ${TPCP_CONFIG_FILEPATH}."
 
 saptransport::load_ini_file "${TPCP_CONFIG_FILEPATH}"
 
-TPCP_WORK_DIRPATH="/tmp/tpcp.$(date +'%Y%m%d-%H%M%S').${RANDOM}.${$}"
+readonly TPCP_WORK_DIRPATH="/tmp/tpcp.$(date +'%Y%m%d-%H%M%S').${RANDOM}.${$}"
 
 if [[ ! -d "${TPCP_WORK_DIRPATH}" ]]; then
     mkdir "${TPCP_WORK_DIRPATH}" || tpcp::utils::terminate "Cannot create work directory ${TPCP_WORK_DIRPATH}."
 fi
-
-# record initial status
-for transport in "${IP_TRANSPORT_LIST[@]}"; do
-    for system in "${IP_SYSTEM_LIST[@]}"; do
-        for action in "${IP_ACTION_LIST[@]}"; do
-            saptransport::record_status "${SAPTRANSPORT_STATUS_INITIAL}" "${transport}" "${system}" "${action}"
-        done
-    done
-done
 
 echo
 echo "Caching information about transport domains."
@@ -114,12 +119,13 @@ echo "Caching information about transport domains."
 # cache transport domains in advance so all background processes have full transport domains map
 saptransport::cache_transport_domains "${IP_SYSTEM_LIST[@]}" "${IP_TRANSPORT_LIST[@]}"
 
+# initialize all statuses
+saptransport::initialize_statuses "IP_TRANSPORT_LIST[@]" "IP_SYSTEM_LIST[@]" "IP_ACTION_LIST[@]" # hack to pass 3 arrays as argument
+
 # process all transports on all systems
 for transport in "${IP_TRANSPORT_LIST[@]}"; do
     saptransport::process_transport "${transport}" "IP_SYSTEM_LIST[@]" "IP_ACTION_LIST[@]" # hack to pass 2 arrays as argument
 done &
-
-sleep 1
 
 tpcp::renderer::render_table
 

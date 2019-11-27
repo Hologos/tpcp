@@ -2,16 +2,16 @@
 
 TPCP_RENDERER_ALREADY_RENDERED=0
 
-TPCP_RENDERER_SYMBOL_INITIAL=" "
-TPCP_RENDERER_SYMBOL_RUNNING="."
-TPCP_RENDERER_SYMBOL_FINISHED="✔"
-TPCP_RENDERER_SYMBOL_FAILED="$(ansi --red --no-newline "✖")"
-TPCP_RENDERER_SYMBOL_SKIPPED="-"
-TPCP_RENDERER_SYMBOL_WAITING="\xe2\xa7\x97"
-TPCP_RENDERER_SYMBOL_UNKNOWN="\xef\xbf\xbd"
+readonly TPCP_RENDERER_SYMBOL_INITIAL=" "
+readonly TPCP_RENDERER_SYMBOL_RUNNING="."
+readonly TPCP_RENDERER_SYMBOL_FINISHED="✔"
+readonly TPCP_RENDERER_SYMBOL_FAILED="$(ansi --red --no-newline "✖")"
+readonly TPCP_RENDERER_SYMBOL_SKIPPED="-"
+readonly TPCP_RENDERER_SYMBOL_WAITING="\xe2\xa7\x97"
+readonly TPCP_RENDERER_SYMBOL_UNKNOWN="\xef\xbf\xbd"
 
 function tpcp::renderer::render_table() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     # setup separate log file for renderer
@@ -49,7 +49,7 @@ running_status_max_length=3
 running_status_indeces="$(seq 0 ${running_status_max_length})"
 
 function tpcp::renderer::__render_table() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     tpcp::renderer::__clear_previous_output "${#IP_TRANSPORT_LIST[@]}" "${#IP_SYSTEM_LIST[@]}"
@@ -82,7 +82,7 @@ function tpcp::renderer::__render_table() {
         for system in "${IP_SYSTEM_LIST[@]}"; do
             logger::log "${TPCP_CURRENT_LABEL}" "T" "Rendering action results for system ${system}."
 
-            system_index=$(( ${system_index} + 1 ))
+            system_index=$(( system_index + 1 ))
             line=""
 
             if [[ ${system_index} -eq 1 ]]; then
@@ -96,9 +96,11 @@ function tpcp::renderer::__render_table() {
             line+="     "     # indentation = 5 characters
 
             for action in "${IP_ACTION_LIST[@]}"; do
-                logger::log "${TPCP_CURRENT_LABEL}" "T" "Rendering action result "${action}" for system ${system}."
+                logger::log "${TPCP_CURRENT_LABEL}" "T" "Rendering action result ${action} for system ${system}."
 
-                local status="$(saptransport::read_status "${transport}" "${system}" "${action}")"
+                local status
+
+                status="$(saptransport::read_status "${transport}" "${system}" "${action}")"
 
                 logger::log "${TPCP_CURRENT_LABEL}" "D" "Rendering status '${status}' of ${transport}->${system}->${action}."
 
@@ -162,7 +164,7 @@ function tpcp::renderer::__render_table() {
         done
     done
 
-    running_status_current_length=$(( (${running_status_current_length} + 1) % ${running_status_max_length} ))
+    running_status_current_length=$(( (running_status_current_length + 1) % running_status_max_length ))
 
     TPCP_RENDERER_ALREADY_RENDERED=1
 }
@@ -171,7 +173,7 @@ function tpcp::renderer::__clear_previous_output() {
     local number_of_transports="${1}"
     local number_of_systems="${2}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   number_of_transports=${number_of_transports}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   number_of_systems=${number_of_systems}"
 
@@ -180,7 +182,7 @@ function tpcp::renderer::__clear_previous_output() {
     #     rest: system + results
     #
     # repeats for every transport
-    local number_of_lines=$(( (1 + 1 + ${number_of_systems} ) * ${number_of_transports} ))
+    local number_of_lines=$(( (1 + 1 + number_of_systems) * number_of_transports ))
 
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Total number of rendered lines is ${number_of_lines}."
 
@@ -199,7 +201,7 @@ function tpcp::renderer::__clear_previous_output() {
 }
 
 function tpcp::render::print_log_location() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     echo
