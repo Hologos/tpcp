@@ -199,6 +199,15 @@ function saptransport::__run_action_on_system() {
                 return 0
             fi
 
+            # copy to selected system's domain controller instead
+            if [[ "${sid}" != "${domain_controller}" ]]; then
+                ssh_target_user="${domain_controller,,}adm"
+                ssh_target_host="${SAPTRANSPORT_HOSTNAMES_MAP[${domain_controller}]}"
+                ssh_target_port="${ssh_port}"
+
+                logger::log "${TPCP_CURRENT_LABEL}" "N" "Changing transport file copy target to domain controller ${domain_controller} (old-target=${sid}, new-target=${domain_controller})."
+            fi
+
             logger::log "${TPCP_CURRENT_LABEL}" "I" "Copying transport files since this is selected system."
 
             ssh_commands+=("scp -p -o ConnectTimeout=5 -o BatchMode=yes -P ${ssh_target_port} /usr/sap/trans/cofiles/K${transport_label}.${sid_source} ${ssh_target_user}@${ssh_target_host}:/usr/sap/trans/cofiles/")
