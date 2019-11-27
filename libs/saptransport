@@ -461,13 +461,13 @@ function saptransport::__get_transport_label() {
     echo -n "${transport:4}"
 }
 
-function saptransport::__cache_transport_domain_from_sid() {
+function saptransport::__cache_domain_controller_from_sid() {
     local sid="${1}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
-    if ! saptransport::__cache_transport_domain "${sid}"; then
+    if ! saptransport::__cache_domain_controller "${sid}"; then
         local filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_ABORT_FILENAME}"
 
         # creates signal file to abort
@@ -480,11 +480,11 @@ function saptransport::__cache_transport_domain_from_sid() {
     return 0
 }
 
-function saptransport::cache_transport_domains() {
+function saptransport::cache_domain_controllers() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   args=${*}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "I" "Caching all transport domains in parallel."
+    logger::log "${TPCP_CURRENT_LABEL}" "I" "Caching all domain controllers in parallel."
 
     local sids
 
@@ -495,8 +495,8 @@ function saptransport::cache_transport_domains() {
     local sid
 
     for sid in "${sids[@]}"; do
-        # cache transport domains in parallel
-        saptransport::__cache_transport_domain_from_sid "${sid}" &
+        # cache domain controllers in parallel
+        saptransport::__cache_domain_controller_from_sid "${sid}" &
     done
 
     wait
@@ -505,7 +505,7 @@ function saptransport::cache_transport_domains() {
         tpcp::utils::terminate "Could not cache all domain controllers."
     fi
 
-    # load transport domains here so all background processes have full transport domains map
+    # load domain controllers here so all background processes have full domain controllers map
     local cache_filepath
 
     for cache_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}."*; do
@@ -514,19 +514,19 @@ function saptransport::cache_transport_domains() {
         SAPTRANSPORT_DOMAIN_CONTROLLERS_MAP[${sid}]="$( < "${cache_filepath}" )" \
             || tpcp::utils::terminate "Cannot load domain controller from file '${cache_filepath}'."
 
-        # TODO: maybe cache domain controller here to prevent unnecessary reading from file in saptransport::__cache_transport_domain()
+        # TODO: maybe cache domain controller here to prevent unnecessary reading from file in saptransport::__cache_domain_controller()
     done
 
-    logger::log "${TPCP_CURRENT_LABEL}" "I" "Caching all transport domains has finished."
+    logger::log "${TPCP_CURRENT_LABEL}" "I" "Caching all domain controllers has finished."
 }
 
-function saptransport::__cache_transport_domain() {
+function saptransport::__cache_domain_controller() {
     local sid="${1}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for ${sid}."
+    logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching domain controller for ${sid}."
 
     if ! saptransport::__hostname_exists "${sid}"; then
         logger::log "${TPCP_CURRENT_LABEL}" "C" "Hostname for SID ${sid} not found."
@@ -569,7 +569,7 @@ function saptransport::__cache_transport_domain() {
     if [[ "${sid}" != "${domain_controller}" ]]; then
         local cache_filepath_domain_controller="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}.${domain_controller}"
 
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for domain controller ${domain_controller}."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching domain controller for domain controller ${domain_controller}."
 
         echo -n "${domain_controller}" > "${cache_filepath_domain_controller}"
     fi
