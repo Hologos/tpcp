@@ -99,8 +99,11 @@ function saptransport::__run_action_on_system() {
 
     saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${transport}" "${system}" "${action}"
 
+    # shellcheck disable=SC2155
     local sid="$(saptransport::__get_sid "${system}")"
+    # shellcheck disable=SC2155
     local client="$(saptransport::__get_client "${system}")"
+    # shellcheck disable=SC2155
     local transport_label="$(saptransport::__get_transport_label "${transport}")"
 
     if ! saptransport::__hostname_exists "${sid}"; then
@@ -122,6 +125,8 @@ function saptransport::__run_action_on_system() {
     case "${action}" in
         "${SAPTRANSPORT_ACTION_CPY}" )
             # copies transport from source system
+
+            # shellcheck disable=SC2155
             local sid_source="$(saptransport::__get_sid_from_transport "${transport}")"
 
             local ssh_target_user="${ssh_user}"
@@ -133,7 +138,9 @@ function saptransport::__run_action_on_system() {
             local ssh_port="22"
 
             local domain_controller_source="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid_source}]}"
-            local selected_system="$(saptransport::__get_system_from_requested_transport_domain "${domain_controller}" "${IP_SYSTEM_LIST[@]}")" || { \
+            local selected_system
+
+            selected_system="$(saptransport::__get_system_from_requested_transport_domain "${domain_controller}" "${IP_SYSTEM_LIST[@]}")" || { \
                 saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
 
                 tpcp::utils::terminate "Cannot find system from requested transport domain ${domain_controller}."
@@ -158,7 +165,9 @@ function saptransport::__run_action_on_system() {
                 while : ; do
                     sleep 0.2
 
-                    local status="$(saptransport::read_status "${transport}" "${selected_system}" "${action}")"
+                    local status
+
+                    status="$(saptransport::read_status "${transport}" "${selected_system}" "${action}")"
 
                     case "${status}" in
                         "${SAPTRANSPORT_STATUS_FINISHED}" )
@@ -328,7 +337,9 @@ function saptransport::read_status() {
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Loading status of ${transport}->${system}->${action}."
 
-    local status="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
+    local status
+
+    status="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
         || tpcp::utils::terminate "Cannot load status of ${transport}->${system}->${action}."
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Status of ${transport}->${system}->${action} is '${status}'."
@@ -538,7 +549,9 @@ function saptransport::__cache_transport_domain() {
         return 1
     fi
 
-    local domain_controller="$( < "${cache_filepath}" )" \
+    local domain_controller
+
+    domain_controller="$( < "${cache_filepath}" )" \
         || tpcp::utils::terminate "Cannot load domain controller from file '${cache_filepath}'."
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Transport domain for ${sid} is ${domain_controller}."
@@ -574,8 +587,10 @@ function saptransport::__get_system_from_requested_transport_domain() {
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Searching for system from requested transport domain ${domain_controller} (system_list=${system_list[*]})."
 
+    local selected_system
+
     # doing it this way so it is cross-platform (grep -o works only with GNU grep)
-    local selected_system="$(echo -n "${system_list[@]}" | tr ' ' "\n" | grep -E "^${domain_controller}[0-9]{3}\$" | head -n 1)" \
+    selected_system="$(echo -n "${system_list[@]}" | tr ' ' "\n" | grep -E "^${domain_controller}[0-9]{3}\$" | head -n 1)" \
         || logger::log "${TPCP_CURRENT_LABEL}" "E" "Searching for domain controller system for requested transport domain ${domain_controller} in system list failed."
 
     # prefer domain controller
@@ -594,6 +609,7 @@ function saptransport::__get_system_from_requested_transport_domain() {
     local system
 
     for system in "${system_list[@]}"; do
+        # shellcheck disable=SC2155
         local sid_discovered="$(saptransport::__get_sid "${system}")"
         local domain_controller_discovered="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid_discovered}]}"
 

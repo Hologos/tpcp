@@ -4,8 +4,11 @@ function tpcp::utils::usage() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
+    # shellcheck disable=SC2155
     local fmt_bold="$(ansi --bold --no-restore)"
+    # shellcheck disable=SC2155
     local fmt_italic="$(ansi --underline --no-restore)"
+    # shellcheck disable=SC2155
     local fmt_reset="$(ansi --reset-attrib)"
 
     >&2 echo

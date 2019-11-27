@@ -98,7 +98,9 @@ function tpcp::renderer::__render_table() {
             for action in "${IP_ACTION_LIST[@]}"; do
                 logger::log "${TPCP_CURRENT_LABEL}" "T" "Rendering action result ${action} for system ${system}."
 
-                local status="$(saptransport::read_status "${transport}" "${system}" "${action}")"
+                local status
+
+                status="$(saptransport::read_status "${transport}" "${system}" "${action}")"
 
                 logger::log "${TPCP_CURRENT_LABEL}" "D" "Rendering status '${status}' of ${transport}->${system}->${action}."
 
