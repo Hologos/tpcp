@@ -600,11 +600,11 @@ function saptransport::__get_system_from_requested_transport_domain() {
 
     # doing it this way so it is cross-platform (grep -o works only with GNU grep)
     selected_system="$(echo -n "${system_list[@]}" | tr ' ' "\n" | grep -E "^${domain_controller}[0-9]{3}\$" | head -n 1)" \
-        || logger::log "${TPCP_CURRENT_LABEL}" "D" "Searching for domain controller system for requested transport domain ${domain_controller} in system list failed."
+        || logger::log "${TPCP_CURRENT_LABEL}" "D" "Searching for domain controller system from requested transport domain ${domain_controller} in system list failed."
 
     # prefer domain controller
     if [[ "${selected_system}" != "" ]]; then
-        logger::log "${TPCP_CURRENT_LABEL}" "D" "Found domain controller system ${selected_system} for requested transport domain ${domain_controller}."
+        logger::log "${TPCP_CURRENT_LABEL}" "D" "Found domain controller system ${selected_system} from requested transport domain ${domain_controller}."
 
         echo -n "${selected_system}"
 
@@ -633,7 +633,7 @@ function saptransport::__get_system_from_requested_transport_domain() {
         logger::log "${TPCP_CURRENT_LABEL}" "D" "System ${system} is not from requested transport domain (requested=${domain_controller}, discovered=${domain_controller_discovered})."
     done
 
-    logger::log "${TPCP_CURRENT_LABEL}" "E" "No system found for requested transport domain ${domain_controller}."
+    logger::log "${TPCP_CURRENT_LABEL}" "E" "No system found from requested transport domain ${domain_controller}."
 
     return 1
 }
