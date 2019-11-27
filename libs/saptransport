@@ -26,7 +26,7 @@ function saptransport::process_transport() {
     local system_list=("${!2}")
     local action_list=("${!3}")
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system_list=${system_list[*]}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   action_list=${action_list[*]}"
@@ -57,7 +57,7 @@ function saptransport::__run_actions_on_system() {
 
     logger::init "${TPCP_CURRENT_LABEL}" "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_DIRPATH}/${transport}-${system}.log"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   action_list=${action_list[*]}"
@@ -84,7 +84,7 @@ function saptransport::__run_action_on_system() {
     local system="${2}"
     local action="${3}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   action=${action}"
@@ -99,8 +99,11 @@ function saptransport::__run_action_on_system() {
 
     saptransport::record_status "${SAPTRANSPORT_STATUS_RUNNING}" "${transport}" "${system}" "${action}"
 
+    # shellcheck disable=SC2155
     local sid="$(saptransport::__get_sid "${system}")"
+    # shellcheck disable=SC2155
     local client="$(saptransport::__get_client "${system}")"
+    # shellcheck disable=SC2155
     local transport_label="$(saptransport::__get_transport_label "${transport}")"
 
     if ! saptransport::__hostname_exists "${sid}"; then
@@ -122,6 +125,8 @@ function saptransport::__run_action_on_system() {
     case "${action}" in
         "${SAPTRANSPORT_ACTION_CPY}" )
             # copies transport from source system
+
+            # shellcheck disable=SC2155
             local sid_source="$(saptransport::__get_sid_from_transport "${transport}")"
 
             local ssh_target_user="${ssh_user}"
@@ -133,7 +138,9 @@ function saptransport::__run_action_on_system() {
             local ssh_port="22"
 
             local domain_controller_source="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid_source}]}"
-            local selected_system="$(saptransport::__get_system_from_requested_transport_domain "${domain_controller}" "${IP_SYSTEM_LIST[@]}")" || { \
+            local selected_system
+
+            selected_system="$(saptransport::__get_system_from_requested_transport_domain "${domain_controller}" "${IP_SYSTEM_LIST[@]}")" || { \
                 saptransport::record_status "${SAPTRANSPORT_STATUS_FAILED}" "${transport}" "${system}" "${action}"
 
                 tpcp::utils::terminate "Cannot find system from requested transport domain ${domain_controller}."
@@ -158,7 +165,9 @@ function saptransport::__run_action_on_system() {
                 while : ; do
                     sleep 0.2
 
-                    local status="$(saptransport::read_status "${transport}" "${selected_system}" "${action}")"
+                    local status
+
+                    status="$(saptransport::read_status "${transport}" "${selected_system}" "${action}")"
 
                     case "${status}" in
                         "${SAPTRANSPORT_STATUS_FINISHED}" )
@@ -249,7 +258,7 @@ function saptransport::record_status() {
     local system="${3}"
     local action="${4}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   status=${status}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
@@ -321,14 +330,16 @@ function saptransport::read_status() {
     local system="${2}"
     local action="${3}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   action=${action}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Loading status of ${transport}->${system}->${action}."
 
-    local status="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
+    local status
+
+    status="$( < "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_STATUS_FILENAME_PART}.${transport}.${system}.${action}" )" \
         || tpcp::utils::terminate "Cannot load status of ${transport}->${system}->${action}."
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Status of ${transport}->${system}->${action} is '${status}'."
@@ -353,7 +364,7 @@ function saptransport::initialize_statuses() {
     local system_list=("${!2}")
     local action_list=("${!3}")
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport_list=${transport_list[*]}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system_list=${system_list[*]}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   action_list=${action_list[*]}"
@@ -375,7 +386,7 @@ function saptransport::initialize_statuses() {
 }
 
 function saptransport::is_all_done() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     local not_yet_started_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_NOT_FINISHED}"
@@ -390,7 +401,7 @@ function saptransport::is_all_done() {
 function saptransport::__get_sid() {
     local system="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
 
     echo -n "${system:0:3}"
@@ -399,7 +410,7 @@ function saptransport::__get_sid() {
 function saptransport::__get_sid_from_transport() {
     local transport="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
 
     echo -n "${transport:0:3}"
@@ -408,7 +419,7 @@ function saptransport::__get_sid_from_transport() {
 function saptransport::__get_client() {
     local system="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system=${system}"
 
     echo -n "${system:3}"
@@ -417,7 +428,7 @@ function saptransport::__get_client() {
 function saptransport::__get_system_group_name() {
     local sid="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
     echo -n "${sid:0:2}"
@@ -426,7 +437,7 @@ function saptransport::__get_system_group_name() {
 function saptransport::__get_system_group_role() {
     local sid="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
     echo -n "${sid:2}"
@@ -435,7 +446,7 @@ function saptransport::__get_system_group_role() {
 function saptransport::__get_transport_label() {
     local transport="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   transport=${transport}"
 
     echo -n "${transport:4}"
@@ -444,7 +455,7 @@ function saptransport::__get_transport_label() {
 function saptransport::__cache_transport_domain_from_sid() {
     local sid="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
     if ! saptransport::__cache_transport_domain "${sid}"; then
@@ -461,12 +472,14 @@ function saptransport::__cache_transport_domain_from_sid() {
 }
 
 function saptransport::cache_transport_domains() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   args=${*}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "I" "Caching all transport domains in parallel."
 
-    local sids=( $(saptransport::__make_sids_unique "${@}") )
+    local sids
+
+    mapfile -t sids < <(saptransport::__make_sids_unique "${@}")
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Optimized list of SID is '${sids[*]}'."
 
@@ -501,7 +514,7 @@ function saptransport::cache_transport_domains() {
 function saptransport::__cache_transport_domain() {
     local sid="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Caching transport domain for ${sid}."
@@ -515,7 +528,7 @@ function saptransport::__cache_transport_domain() {
     local ssh_user="${sid,,}adm"
     local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${sid}]}"
     local ssh_port="22"
-    local ssh_command="egrep -x '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
+    local ssh_command="grep -E -x '^DOMAIN_([A-Z0-9]{3})\$' /usr/sap/trans/bin/DOMAIN.CFG | cut -d '_' -f 2"
     local cache_filepath="${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}.${sid}"
 
     local rc=0
@@ -536,7 +549,9 @@ function saptransport::__cache_transport_domain() {
         return 1
     fi
 
-    local domain_controller="$( < "${cache_filepath}" )" \
+    local domain_controller
+
+    domain_controller="$( < "${cache_filepath}" )" \
         || tpcp::utils::terminate "Cannot load domain controller from file '${cache_filepath}'."
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Transport domain for ${sid} is ${domain_controller}."
@@ -554,7 +569,7 @@ function saptransport::__cache_transport_domain() {
 function saptransport::__hostname_exists() {
     local sid="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   sid=${sid}"
 
     if ! [[ ${SAPTRANSPORT_HOSTNAMES_MAP[${sid}]+_} ]]; then
@@ -566,14 +581,16 @@ function saptransport::__get_system_from_requested_transport_domain() {
     local domain_controller="${1}"
     local system_list=("${@:2}") # assert: order of passed array stays always the same
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   domain_controller=${domain_controller}"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   system_list=${system_list[*]}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Searching for system from requested transport domain ${domain_controller} (system_list=${system_list[*]})."
 
-    # doing it this way so it is cross-platform (egrep -o works only with GNU egrep)
-    local selected_system="$(echo -n "${system_list[@]}" | tr ' ' "\n" | egrep "^${domain_controller}[0-9]{3}\$" | head -n 1)" \
+    local selected_system
+
+    # doing it this way so it is cross-platform (grep -o works only with GNU grep)
+    selected_system="$(echo -n "${system_list[@]}" | tr ' ' "\n" | grep -E "^${domain_controller}[0-9]{3}\$" | head -n 1)" \
         || logger::log "${TPCP_CURRENT_LABEL}" "E" "Searching for domain controller system for requested transport domain ${domain_controller} in system list failed."
 
     # prefer domain controller
@@ -591,7 +608,8 @@ function saptransport::__get_system_from_requested_transport_domain() {
 
     local system
 
-    for system in ${system_list[@]}; do
+    for system in "${system_list[@]}"; do
+        # shellcheck disable=SC2155
         local sid_discovered="$(saptransport::__get_sid "${system}")"
         local domain_controller_discovered="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid_discovered}]}"
 
@@ -614,7 +632,7 @@ function saptransport::__get_system_from_requested_transport_domain() {
 function saptransport::load_ini_file() {
     local filepath="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   filepath=${filepath}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "I" "Loading ini file ${filepath}."
@@ -626,8 +644,8 @@ function saptransport::load_ini_file() {
     local line=""
     local line_number=0
 
-    while read line; do
-        line_number="$(( ${line_number} + 1 ))"
+    while read -r line; do
+        line_number="$(( line_number + 1 ))"
 
         logger::log "${TPCP_CURRENT_LABEL}" "D" "Reading line #${line_number} '${line}'."
 
@@ -655,7 +673,7 @@ function saptransport::load_ini_file() {
 }
 
 function saptransport::__make_sids_unique() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   args=${*}"
 
     logger::log "${TPCP_CURRENT_LABEL}" "D" "Removing duplicate SIDs from the list '${*}'."

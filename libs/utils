@@ -1,11 +1,14 @@
 #! /usr/bin/env bash
 
 function tpcp::utils::usage() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
+    # shellcheck disable=SC2155
     local fmt_bold="$(ansi --bold --no-restore)"
+    # shellcheck disable=SC2155
     local fmt_italic="$(ansi --underline --no-restore)"
+    # shellcheck disable=SC2155
     local fmt_reset="$(ansi --reset-attrib)"
 
     >&2 echo
@@ -33,7 +36,7 @@ function tpcp::utils::usage() {
 }
 
 function tpcp::utils::terminate() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
 
     if [[ ${#} -eq 0 ]]; then
         logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
@@ -56,7 +59,7 @@ function tpcp::utils::terminate() {
 function tpcp::utils::contains_duplicates() {
     local string="${1}"
 
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   string=${string}"
 
     if [[ "$(echo -n "${string}" | tr ' ' "\n" | sort | uniq -d)" != "" ]]; then
@@ -67,7 +70,7 @@ function tpcp::utils::contains_duplicates() {
 }
 
 function tpcp::utils::interrupt_trap() {
-    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "Running ${FUNCNAME[0]}():"
     logger::log "T" "   [no-params]"
 
     logger::log "C" "The program is being killed! Killing all background processes."
@@ -77,7 +80,7 @@ function tpcp::utils::interrupt_trap() {
 }
 
 function tpcp::utils::exit_trap() {
-    logger::log "T" "Running ${FUNCNAME}():"
+    logger::log "T" "Running ${FUNCNAME[0]}():"
     logger::log "T" "   [no-params]"
 
     tpcp::render::print_log_location
@@ -86,7 +89,7 @@ function tpcp::utils::exit_trap() {
 }
 
 function tpcp::utils::cleanup() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     logger::log "${TPCP_CURRENT_LABEL}" "I" "Cleaning up temporary files."
@@ -95,23 +98,23 @@ function tpcp::utils::cleanup() {
 }
 
 function tpcp::utils::capture_stdout() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     local msg=""
 
-    while read msg; do
+    while read -r msg; do
         logger::log "${TPCP_CURRENT_LABEL}" "I" "${msg}"
     done
 }
 
 function tpcp::utils::capture_stderr() {
-    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME}():"
+    logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
     local msg=""
 
-    while read msg; do
+    while read -r msg; do
         logger::log "${TPCP_CURRENT_LABEL}" "W" "${msg}"
     done
 }
