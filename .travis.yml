@@ -41,8 +41,7 @@ before_script:
 
 script:
   # test needs to be run in docker, because we need to test it under different versions of bash
-  # -u 1234 = so it doesn't run under root
-  - docker run -v ${PWD}:${PWD} -w ${PWD} -u 1234 bash:${BASH_VERSION} ./tests.sh --install-deps
+  - docker run -v ${PWD}:${PWD} -w ${PWD} bash:${BASH_VERSION} ./tests.sh --install-deps
 
 after_success:
   - sed -i "s/<<VERSION>>/${TRAVIS_TAG}/g" tpcp
