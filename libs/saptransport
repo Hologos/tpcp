@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 declare -A SAPTRANSPORT_HOSTNAMES_MAP
-declare -A SAPTRANSPORT_TRANSPORT_DOMAINS_MAP
+declare -A SAPTRANSPORT_DOMAIN_CONTROLLERS_MAP
 
 readonly SAPTRANSPORT_ACTION_CPY="CPY"
 readonly SAPTRANSPORT_ACTION_ADD="ADD"
@@ -119,7 +119,7 @@ function saptransport::__run_action_on_system() {
     local ssh_port="22"
     local ssh_commands=()
 
-    local domain_controller="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]}"
+    local domain_controller="${SAPTRANSPORT_DOMAIN_CONTROLLERS_MAP[${sid}]}"
     local rc_threshold=0
 
     case "${action}" in
@@ -137,7 +137,7 @@ function saptransport::__run_action_on_system() {
             local ssh_host="${SAPTRANSPORT_HOSTNAMES_MAP[${sid_source}]}"
             local ssh_port="22"
 
-            local domain_controller_source="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid_source}]}"
+            local domain_controller_source="${SAPTRANSPORT_DOMAIN_CONTROLLERS_MAP[${sid_source}]}"
             local selected_system
 
             selected_system="$(saptransport::__get_system_from_requested_transport_domain "${domain_controller}" "${IP_SYSTEM_LIST[@]}")" || { \
@@ -511,7 +511,7 @@ function saptransport::cache_transport_domains() {
     for cache_filepath in "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_DOMAIN_CONTROLLER_FILENAME_PART}."*; do
         local sid="${cache_filepath: -3}"
 
-        SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid}]="$( < "${cache_filepath}" )" \
+        SAPTRANSPORT_DOMAIN_CONTROLLERS_MAP[${sid}]="$( < "${cache_filepath}" )" \
             || tpcp::utils::terminate "Cannot load domain controller from file '${cache_filepath}'."
 
         # TODO: maybe cache domain controller here to prevent unnecessary reading from file in saptransport::__cache_transport_domain()
@@ -620,7 +620,7 @@ function saptransport::__get_system_from_requested_transport_domain() {
     for system in "${system_list[@]}"; do
         # shellcheck disable=SC2155
         local sid_discovered="$(saptransport::__get_sid "${system}")"
-        local domain_controller_discovered="${SAPTRANSPORT_TRANSPORT_DOMAINS_MAP[${sid_discovered}]}"
+        local domain_controller_discovered="${SAPTRANSPORT_DOMAIN_CONTROLLERS_MAP[${sid_discovered}]}"
 
         if [[ "${domain_controller}" == "${domain_controller_discovered}" ]]; then
             logger::log "${TPCP_CURRENT_LABEL}" "D" "Found system ${system} from requested transport domain ${domain_controller}."
