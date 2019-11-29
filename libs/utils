@@ -86,7 +86,10 @@ function tpcp::utils::exit_trap() {
     # so other threads have time to finish writing to WORKDIR
     sleep 0.2
 
-    tpcp::renderer::redraw_table
+    if [[ -e "${TPCP_WORK_DIRPATH}/${SAPTRANSPORT_NOT_FINISHED}" ]]; then
+        tpcp::renderer::redraw_table
+    fi
+
     tpcp::render::print_log_location
 
     ansi::showCursor
