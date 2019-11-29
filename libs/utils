@@ -86,6 +86,7 @@ function tpcp::utils::exit_trap() {
     # so other threads have time to finish writing to WORKDIR
     sleep 0.2
 
+    tpcp::renderer::redraw_table
     tpcp::render::print_log_location
 
     ansi::showCursor
