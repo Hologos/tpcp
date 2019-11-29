@@ -10,7 +10,7 @@ readonly TPCP_RENDERER_SYMBOL_SKIPPED="-"
 readonly TPCP_RENDERER_SYMBOL_WAITING="\xe2\xa7\x97"
 readonly TPCP_RENDERER_SYMBOL_UNKNOWN="\xef\xbf\xbd"
 
-function tpcp::renderer::render_table() {
+function tpcp::renderer::run() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
@@ -32,11 +32,11 @@ function tpcp::renderer::render_table() {
             break
         fi
 
-        tpcp::renderer::__render_table
+        tpcp::renderer::redraw_table
     done
 
     # render the screen again to update the results
-    tpcp::renderer::__render_table
+    tpcp::renderer::redraw_table
 
     # show cursor
     ansi::showCursor
@@ -48,7 +48,7 @@ running_status_current_length=0
 running_status_max_length=3
 running_status_indeces="$(seq 0 ${running_status_max_length})"
 
-function tpcp::renderer::__render_table() {
+function tpcp::renderer::redraw_table() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
