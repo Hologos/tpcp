@@ -45,7 +45,7 @@ script:
 
 after_success:
   - sed -i "s/<<VERSION>>/${TRAVIS_TAG}/g" tpcp
-  - tar cvzf tpcp.tar.gz vendor libs tpcp LICENSE
+  - tar cvzf tpcp.tar.gz vendor libs tpcp tpcp-completion.bash system-definition.sample.ini LICENSE
 
 deploy:
   provider: releases
