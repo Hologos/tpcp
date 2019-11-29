@@ -83,9 +83,14 @@ function tpcp::utils::exit_trap() {
     logger::log "T" "Running ${FUNCNAME[0]}():"
     logger::log "T" "   [no-params]"
 
+    # so other threads have time to finish writing to WORKDIR
+    sleep 0.2
+
     tpcp::render::print_log_location
 
     ansi::showCursor
+
+    tpcp::utils::cleanup
 }
 
 function tpcp::utils::cleanup() {
