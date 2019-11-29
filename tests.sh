@@ -23,7 +23,7 @@ while [[ ${#} -ne 0 ]] && [[ "${1}" != "" ]]; do
     shift
 done
 
-for shellcheck_test_file in tpcp libs/*; do
+for shellcheck_test_file in tpcp tpcp-completion.bash libs/*; do
     shellcheck -x -s bash "${shellcheck_test_file}" \
         && echo "|  ok  | no errors detected in ${shellcheck_test_file}" \
         || echo "| fail | errors detected in ${shellcheck_test_file}"
