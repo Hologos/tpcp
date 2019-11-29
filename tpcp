@@ -127,7 +127,7 @@ for transport in "${IP_TRANSPORT_LIST[@]}"; do
     saptransport::process_transport "${transport}" "IP_SYSTEM_LIST[@]" "IP_ACTION_LIST[@]" # hack to pass 2 arrays as argument
 done &
 
-tpcp::renderer::render_table
+tpcp::renderer::run
 
 wait
 

@@ -10,7 +10,7 @@ readonly TPCP_RENDERER_SYMBOL_SKIPPED="-"
 readonly TPCP_RENDERER_SYMBOL_WAITING="\xe2\xa7\x97"
 readonly TPCP_RENDERER_SYMBOL_UNKNOWN="\xef\xbf\xbd"
 
-function tpcp::renderer::render_table() {
+function tpcp::renderer::run() {
     logger::log "${TPCP_CURRENT_LABEL}" "T" "Running ${FUNCNAME[0]}():"
     logger::log "${TPCP_CURRENT_LABEL}" "T" "   [no-params]"
 
