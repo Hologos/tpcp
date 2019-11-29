@@ -1,21 +1,26 @@
-# tpcp
+# tpcp [![Build Status](https://travis-ci.org/Hologos/tpcp.svg?branch=master)](https://travis-ci.org/Hologos/tpcp)
 
-A tool to remotely work with SAP import queue and transports.
+A smart tool to remotely work with SAP import queue and transports.
 
 ```bash
 # ideally save it to your .bash_profile, .zlogin (etc)
 $ export TPCP_CONFIG_FILEPATH="${HOME}/.config/tpcp/system-definition.ini"
 
-$ tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
+$ tpcp CCDK000001   AAD000 AAD100 AAT000 BBT000 BBT100 CCP000   CPY ADD IMP DEL
 
 Loading system informations from /home/hologos/.config/tpcp/system-definition.ini.
 
-                          CPY ADD IMP DEL
-ABCK123456     EFG900      ✔   ✔  ...
-               MNO000      ✖   -   -   -
-               XYZ100      ✔   ✔   ✔   ✔
+Caching information about domain controllers.
 
-Log is located at tpcp.20190824-173209.log.
+                          CPY ADD IMP DEL
+CCDK000001     AAD000     ...
+               AAD100      ⧗
+               AAT000      ⧗
+               BBT000      ✔   ✔   ✔   ✔
+               BBT100      ✔   ✖   -   -
+               CCP000      -   ✔   ✖   -
+
+Logs are located at ./tpcp-logs/20190824-173209.
 ```
 
 ## What does it do
@@ -24,20 +29,30 @@ Log is located at tpcp.20190824-173209.log.
 * copies transport (cofile and data file) from system to system
 * imports transport to system
 * runs in bulk (multiple transports to multiple systems)
+* it is **smart**
+  * doesn't copy transport if source system and target system are in the same transport domain
+  * doesn't copy transport to multiple systems in the same transport domain
 
 ## Technical details
+
 * written in bash
 * uses jobs to run actions in parallel
-* multiplexes ssh connections using MasterControl (all commands on one system are ran via single ssh connection)
+* multiplexes ssh connections using MasterControl (all commands on one system are run via single ssh connection)
 
 ## Installation
 
-_TBA once building using Travis CI is fully working_
+**Important:** bash v4.4 and higher is required
+
+1) Download archive from [the release page](https://github.com/Hologos/tpcp/releases) and unpack it.
+2) Create system-definition.ini file (follow instructions in section [System definition ini file](#system-definition-ini-file)).
+3) _Option:_ Copy completion script to /etc/bash_completion.d (or other predefined location).
+4) Run the script.
 
 ### Cloning repo
 
-_If you forget to do `peru sync` after every update that contained changed `peru.yaml`, it can have undesirable consequences and cause serious problems. Use at your own risk._
+**Important:** _If you forget to do `peru sync` after every update that contained changed `peru.yaml`, it can have undesirable consequences and can cause serious problems. Use at your own risk._
 
+_Downloading files from release page is preferred._
 
 ```bash
 git clone https://github.com/Hologos/tpcp
@@ -66,21 +81,17 @@ tpcp <transport-list> <system-list> <action-list>
             IMP - import transport into system
             DEL - delete transport from import queue
 
-    Environment variables
-        TPCP_SYSTEM_FILEPATH - filepath to system definition ini file
-        TPCP_LOGGER_LEVEL - level for logger library (default is I)
+Environment variables
+    TPCP_SYSTEM_FILEPATH - filepath to system definition ini file
+    TPCP_LOGGER_LEVEL - level for logger library (default is I)
+    TPCP_LOG_DIRPATH_ROOT - dirpath to directory (relative or absolute) where to store logs (default is .)
 ```
 
-### Log file
+### Log files
 
-For each run of the program there is a log file. It is called `tpcp.<datetime>.log` and is located in current directory.
+Every run of the program generates a log directory `tpcp-logs/<datetime>`.
 
-```
-[24.08.2019 17:32:09] I: Program invoked as tpcp ABCK123456 EFG900 MNO000 XYZ100 CPY ADD IMP DEL
-[24.08.2019 17:32:09] I: Loading ini file /home/hologos/.config/tpcp/system-definition.ini.
-[24.08.2019 17:32:09] E: There was an error while running action CPY for transport ABCK123456 on system MNO000.
-[24.08.2019 17:32:09] I: All actions for transport ABCK123456 on system XYZ100 were successfully completed.
-```
+By default, the `tpcp-logs` is located in current working directory but the location can be changed with `TPCP_LOG_DIRPATH_ROOT` variable.
 
 ### System definition ini file
 
@@ -113,8 +124,8 @@ Host *.<your-domain-here>
 
 Debugging is done with [logger library](https://github.com/Hologos/logger). To see debug messages, set `TPCP_LOGGER_LEVEL` variable to debug value `"D"`.
 
-In debug mode, to make it easier, the log file is always called `tpcp.debug.log`.
+In debug mode, to make it easier, the log directory is always called `debug`.
 
 ```bash
-$ TPCP_LOGGER_LEVEL="D" tpcp "ABCK123456" "EFG900 MNO000 XYZ100" "CPY ADD IMP DEL"
+$ TPCP_LOGGER_LEVEL="D" tpcp ABCK123456   EFG900 MNO000 XYZ100   CPY ADD IMP DEL
 ```

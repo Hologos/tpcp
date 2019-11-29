@@ -70,6 +70,12 @@ if logger::level_is_lower "${TPCP_LOGGER_LEVEL}" "D" || logger::level_is_equal "
     fi
 fi
 
+readonly TPCP_WORK_DIRPATH="/tmp/tpcp.$(date +'%Y%m%d-%H%M%S').${RANDOM}.${$}"
+
+if [[ ! -d "${TPCP_WORK_DIRPATH}" ]]; then
+    mkdir "${TPCP_WORK_DIRPATH}" || tpcp::utils::terminate "Cannot create work directory ${TPCP_WORK_DIRPATH}."
+fi
+
 logger::init "${TPCP_LOGGER_LEVEL}" "${TPCP_LOG_DIRPATH}/main.log"
 
 logger::log "${TPCP_CURRENT_LABEL}" "I" "Running tpcp v${TPCP_VERSION}."
@@ -107,17 +113,11 @@ echo "Loading system informations from ${TPCP_CONFIG_FILEPATH}."
 
 saptransport::load_ini_file "${TPCP_CONFIG_FILEPATH}"
 
-readonly TPCP_WORK_DIRPATH="/tmp/tpcp.$(date +'%Y%m%d-%H%M%S').${RANDOM}.${$}"
-
-if [[ ! -d "${TPCP_WORK_DIRPATH}" ]]; then
-    mkdir "${TPCP_WORK_DIRPATH}" || tpcp::utils::terminate "Cannot create work directory ${TPCP_WORK_DIRPATH}."
-fi
-
 echo
-echo "Caching information about transport domains."
+echo "Caching information about domain controllers."
 
-# cache transport domains in advance so all background processes have full transport domains map
-saptransport::cache_transport_domains "${IP_SYSTEM_LIST[@]}" "${IP_TRANSPORT_LIST[@]}"
+# cache domain controllers in advance so all background processes have full domain controllers map
+saptransport::cache_domain_controllers "${IP_SYSTEM_LIST[@]}" "${IP_TRANSPORT_LIST[@]}"
 
 # initialize all statuses
 saptransport::initialize_statuses "IP_TRANSPORT_LIST[@]" "IP_SYSTEM_LIST[@]" "IP_ACTION_LIST[@]" # hack to pass 3 arrays as argument
@@ -127,14 +127,10 @@ for transport in "${IP_TRANSPORT_LIST[@]}"; do
     saptransport::process_transport "${transport}" "IP_SYSTEM_LIST[@]" "IP_ACTION_LIST[@]" # hack to pass 2 arrays as argument
 done &
 
-tpcp::renderer::render_table
+tpcp::renderer::run
 
 wait
 
 TPCP_CURRENT_LABEL="${LOGGER_GLOBAL_LABEL}"
 
 logger::log "${TPCP_CURRENT_LABEL}" "I" "Everything is done."
-
-# -- cleanup ------------------------------------------------------------------
-
-tpcp::utils::cleanup
