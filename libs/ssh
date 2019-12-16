@@ -17,6 +17,7 @@ function tpcp::ssh::__close_master_connection() {
     local rc=0
 
     ssh                                                 \
+        -n                                              \
         -o ConnectTimeout=5                             \
         -o BatchMode=yes                                \
         -o ForwardX11=no                                \
@@ -50,6 +51,7 @@ function tpcp::ssh::__is_master_connection_alive() {
     local rc=0
 
     ssh                                                 \
+        -n                                              \
         -o ConnectTimeout=5                             \
         -o BatchMode=yes                                \
         -o ForwardX11=no                                \
@@ -91,6 +93,7 @@ function tpcp::ssh::__create_master_connection() {
     local rc=0
 
     ssh                                                 \
+        -n                                              \
         -M                                              \
         -N                                              \
         -f                                              \
@@ -152,6 +155,7 @@ function tpcp::ssh::run_command() {
     local rc=0
 
     ssh                                                 \
+        -n                                              \
         -o ConnectTimeout=5                             \
         -o BatchMode=yes                                \
         -o ForwardX11=no                                \
