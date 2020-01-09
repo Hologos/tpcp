@@ -4,19 +4,10 @@ set -euo pipefail
 
 # -- absolute dirpath ---------------------------------------------------------
 
-ABSOLUTE_DIRPATH="${0}"
-
-# this works on both linux and macOS
-if [[ -L "${0}" ]]; then
-    ABSOLUTE_DIRPATH="$(readlink "${0}")"
-
-    if [[ "${ABSOLUTE_DIRPATH}" == "" ]]; then
+ABSOLUTE_DIRPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" || { \
         >&2 echo "Cannot determine real path of the script."
         exit 1
-    fi
-fi
-
-ABSOLUTE_DIRPATH="$(dirname "${ABSOLUTE_DIRPATH}")"
+    }
 
 # -- load libraries -----------------------------------------------------------
 
@@ -100,7 +91,9 @@ if [[ ${#} -eq 0 ]]; then
     tpcp::utils::terminate
 fi
 
-tpcp::inputparser::parse_input "${@}"
+# ignoring this error to be backward compatible with tpdistrib
+# shellcheck disable=SC2068
+tpcp::inputparser::parse_input ${@}
 
 # -- main program -------------------------------------------------------------
 
