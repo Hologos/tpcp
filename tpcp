@@ -91,7 +91,9 @@ if [[ ${#} -eq 0 ]]; then
     tpcp::utils::terminate
 fi
 
-tpcp::inputparser::parse_input "${@}"
+# ignoring this error to be backward compatible with tpdistrib
+# shellcheck disable=SC2068
+tpcp::inputparser::parse_input ${@}
 
 # -- main program -------------------------------------------------------------
 
